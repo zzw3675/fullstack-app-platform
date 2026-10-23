@@ -1,0 +1,46 @@
+/* 全栈网页应用管理平台 · 主题层（参考 CloudMail 的组件化观感：柔和阴影 / 圆角 / 统一焦点环 / 主色变量）
+   主题色由 theme.js 按用户选择写入 CSS 变量（localStorage pf_theme），默认海蓝。 */
+:root{
+  --pf-primary:#2563EB;
+  --pf-deep:#0A2540;
+  --pf-accent:#22C3D6;
+  --pf-ring:rgba(37,99,235,.18);
+}
+body{ -webkit-font-smoothing:antialiased; }
+header, .bar{ background:var(--pf-deep) !important; border-bottom-color:var(--pf-accent) !important; }
+aside{ background:var(--pf-deep) !important; }
+.btn:not(.ghost):not(.danger), .btnNew{ background:var(--pf-primary) !important; transition:filter .15s, transform .05s; }
+.btn:not(.ghost):not(.danger):hover, .btnNew:hover{ filter:brightness(1.1); }
+.btn:active, .btnNew:active{ transform:translateY(1px); }
+.btn.ghost:hover{ border-color:var(--pf-primary) !important; color:var(--pf-primary) !important; }
+.tag{ background:var(--pf-ring) !important; color:var(--pf-primary) !important; }
+input:focus, select:focus, textarea:focus{
+  border-color:var(--pf-primary) !important;
+  box-shadow:0 0 0 3px var(--pf-ring);
+  outline:none;
+}
+.panel, a.card, .stat, .lcard, .tree-box, .org-branch{
+  border-radius:14px !important;
+  border-color:#E4EAF2 !important;
+  box-shadow:0 1px 3px rgba(16,42,80,.06), 0 10px 28px rgba(16,42,80,.05);
+}
+a.card{ transition:border-color .15s, box-shadow .15s, transform .15s; }
+a.card:hover{ border-color:var(--pf-primary) !important; transform:translateY(-2px); box-shadow:0 4px 8px rgba(16,42,80,.07), 0 16px 34px rgba(16,42,80,.09); }
+table tbody tr{ transition:background .12s; }
+table tbody tr:hover{ background:#F8FBFF; }
+.tree-root{ background:var(--pf-deep) !important; }
+.tnode .av{ background:var(--pf-ring) !important; color:var(--pf-primary) !important; }
+.tnode:hover{ border-color:var(--pf-primary) !important; }
+.viewtabs button.on{ background:var(--pf-deep) !important; border-color:var(--pf-deep) !important; }
+.seg button.on-out, .seg button.on-in{ filter:saturate(1.05); }
+#toast{ background:var(--pf-deep) !important; border-radius:999px !important; box-shadow:0 10px 30px rgba(16,42,80,.25); }
+/* 主题色选择器（theme.js 注入） */
+#pfThemeBox{ position:fixed; right:16px; bottom:16px; z-index:100050; font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+#pfThemeBtn{ width:44px; height:44px; border-radius:50%; border:1px solid #D8E1EC; background:#fff; font-size:19px; cursor:pointer; box-shadow:0 6px 20px rgba(16,42,80,.18); }
+#pfThemePop{ position:absolute; right:0; bottom:54px; background:#fff; border:1px solid #E1E9F2; border-radius:12px; box-shadow:0 14px 40px rgba(16,42,80,.18); padding:10px 12px; width:196px; }
+#pfThemePop .cap{ font-size:12px; color:#8A94A6; margin:2px 0 8px; }
+#pfThemePop .row{ display:flex; gap:8px; flex-wrap:wrap; }
+#pfThemePop .sw{ width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+#pfThemePop .sw.on{ border-color:#0A2540; box-shadow:0 0 0 2px #fff inset; }
+#pfThemePop .nm{ font-size:11px; color:#5B6573; text-align:center; margin-top:2px; }
+#pfThemePop .cell{ display:flex; flex-direction:column; align-items:center; width:30px; }

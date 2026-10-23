@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 · 全栈网页应用管理平台</title>
+<style>
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;box-sizing:border-box}
+  .card{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:28px 24px;width:100%;max-width:360px}
+  h1{font-size:19px;color:#0A2540;margin:0 0 6px}
+  .sub{font-size:13px;color:#8A94A6;margin-bottom:20px}
+  label{display:block;font-size:13px;color:#5B6573;margin:14px 0 6px}
+  input{width:100%;box-sizing:border-box;height:42px;border:1px solid #D8E1EC;border-radius:8px;padding:0 12px;font-size:15px}
+  input:focus{border-color:#2563EB;outline:none}
+  button{width:100%;height:44px;margin-top:22px;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  button:hover{background:#14365E}
+  #msg{font-size:13px;color:#C0392B;min-height:18px;margin-top:12px;text-align:center}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="card">
+  <h1>全栈网页应用管理平台</h1>
+  <div class="sub">登录后可以打开团队的各个小页面，填数、更新都在里面。</div>
+  <label>邮箱</label>
+  <input id="email" type="email" autocomplete="username" placeholder="name@example.com">
+  <label>密码</label>
+  <input id="password" type="password" autocomplete="current-password" placeholder="密码">
+  <button id="btn">登录</button>
+  <div id="msg"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:16px">
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:left">
+      <a href="#" id="forgot" style="font-size:13px;color:#2563EB;text-decoration:none">忘记密码？点这里用邮箱找回</a>
+      <a href="/register.html" style="font-size:13px;color:#2563EB;text-decoration:none">还没有账号？自助注册</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:right">
+      <a href="/admin.html" style="font-size:13px;color:#2563EB;text-decoration:none">管理员登录</a>
+    </div>
+  </div>
+</div>
+<script>
+  const next = new URLSearchParams(location.search).get('next') || '/';
+  document.getElementById('btn').addEventListener('click', login);
+  document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  async function login(){
+    const identity = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('msg');
+    if (!identity || !password){ msg.textContent = '请填邮箱和密码'; return; }
+    msg.textContent = '';
+    try {
+      const r = await fetch('/api/collections/users/auth-with-password', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({identity: identity, password: password})
+      });
+      if (!r.ok) throw new Error('bad');
+      const j = await r.json();
+      localStorage.setItem('pb_auth', JSON.stringify(j));
+      location.href = next;
+    } catch(e){ msg.textContent = '登录失败：邮箱或密码不对'; }
+  }
+  document.getElementById('forgot').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = (document.getElementById('email').value || '').trim() || prompt('输入你的登录邮箱，重置链接会发到邮箱里：');
+    if (!email) return;
+    try {
+      await fetch('/api/collections/users/request-password-reset', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email})
+      });
+    } catch(err){}
+    alert('如果这个邮箱有账号，重置链接已经发过去了，去邮箱里点链接改密码（30 分钟内有效）。');
+  });
+</script>
+</body>
+</html>

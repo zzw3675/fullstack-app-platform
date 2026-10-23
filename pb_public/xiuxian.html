@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>修仙打妖兽 · 点点养成</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif; background:radial-gradient(1200px 600px at 50% -10%, #26356e 0%, #131a33 55%, #0b1026 100%); color:#eef1ff; min-height:100vh; padding:14px 12px 40px; }
+  .wrap { max-width:880px; margin:0 auto; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  header h1 { font-size:22px; letter-spacing:1px; }
+  header h1 .gold { color:#f5c542; }
+  .hbtn { color:#aebadd; text-decoration:none; font-size:13px; border:1px solid rgba(255,255,255,.18); padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.05); cursor:pointer; }
+  .hbtn:hover { color:#fff; border-color:rgba(255,255,255,.4); }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .stat { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:10px 8px; text-align:center; }
+  .stat .k { font-size:12px; color:#9fb0d8; }
+  .stat .v { font-size:19px; font-weight:700; margin-top:2px; }
+  .stat .v.gold { color:#f5c542; } .stat .v.cyan { color:#5ee7df; }
+  .card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.09); border-radius:18px; padding:16px; margin-bottom:12px; }
+  .stage-line { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; }
+  .stage-line .realm { font-size:17px; font-weight:700; color:#ffd97a; }
+  .stage-line .stage { font-size:13px; color:#9fb0d8; }
+  .dots { font-size:13px; letter-spacing:3px; color:#5ee7df; }
+  .monster-zone { position:relative; text-align:center; padding:10px 0 2px; }
+  #monsterBtn { background:none; border:none; cursor:pointer; font-size:112px; line-height:1.15; transition:transform .06s; user-select:none; filter:drop-shadow(0 10px 24px rgba(0,0,0,.45)); }
+  #monsterBtn:active { transform:scale(.93); }
+  #monsterBtn.hit { animation:shake .18s; }
+  @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-7px) rotate(-3deg)} 50%{transform:translateX(6px)} 75%{transform:translateX(-4px) rotate(2deg)} 100%{transform:translateX(0)} }
+  .mname { font-size:19px; font-weight:700; margin-top:2px; }
+  .mname .boss { color:#ff7a7a; font-size:13px; border:1px solid #ff7a7a; border-radius:6px; padding:1px 6px; margin-left:6px; vertical-align:2px; }
+  .hpbar { height:16px; background:rgba(0,0,0,.45); border-radius:999px; overflow:hidden; margin:10px auto 4px; max-width:520px; border:1px solid rgba(255,255,255,.12); }
+  #hpFill { height:100%; width:100%; background:linear-gradient(90deg,#ff5d5d,#ff9a5d); border-radius:999px; transition:width .12s; }
+  .hptext { font-size:13px; color:#c6cfe8; }
+  .hint { text-align:center; font-size:12px; color:#8494bd; margin-top:8px; }
+  .float { position:absolute; font-weight:800; font-size:21px; color:#ffe27a; pointer-events:none; animation:floatUp .8s ease-out forwards; text-shadow:0 2px 8px rgba(0,0,0,.6); z-index:5; }
+  .float.crit { color:#ff8a5d; font-size:30px; }
+  @keyframes floatUp { 0%{opacity:0; transform:translateY(6px) scale(.8)} 15%{opacity:1; transform:translateY(0) scale(1.1)} 100%{opacity:0; transform:translateY(-72px) scale(1)} }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px){ .row{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,1fr)} #monsterBtn{font-size:92px} }
+  .card h2 { font-size:16px; margin-bottom:8px; }
+  .card h2 .sub { font-size:12px; color:#9fb0d8; font-weight:400; margin-left:6px; }
+  .bigbtn { width:100%; padding:12px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; background:linear-gradient(90deg,#f5c542,#ff9a5d); color:#23180a; }
+  .bigbtn:disabled { background:rgba(255,255,255,.12); color:#8b96b8; cursor:not-allowed; }
+  .bigbtn:not(:disabled):hover { filter:brightness(1.07); }
+  .mini { font-size:12px; color:#9fb0d8; margin-top:8px; line-height:1.6; }
+  .shop { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:640px){ .shop{grid-template-columns:1fr} }
+  .item { background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:12px; }
+  .item .t { font-size:15px; font-weight:700; }
+  .item .t .lv { color:#5ee7df; font-size:12px; margin-left:6px; }
+  .item .d { font-size:12px; color:#9fb0d8; margin:4px 0 10px; line-height:1.55; min-height:34px; }
+  .buy { width:100%; padding:9px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; background:#2b3a6e; color:#dfe7ff; }
+  .buy:not(:disabled):hover { background:#35498c; }
+  .buy:disabled { opacity:.45; cursor:not-allowed; }
+  .buy .cost { color:#f5c542; }
+  #log { list-style:none; font-size:13px; line-height:1.9; color:#c6cfe8; max-height:168px; overflow:hidden; }
+  #log li:first-child { color:#ffd97a; }
+  .toast { position:fixed; left:50%; top:16px; transform:translateX(-50%) translateY(-70px); background:#1d2a52; border:1px solid #f5c542; color:#ffe9a8; padding:10px 18px; border-radius:12px; font-size:14px; font-weight:700; transition:transform .3s; z-index:99; box-shadow:0 10px 30px rgba(0,0,0,.5); max-width:92vw; text-align:center; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  footer { text-align:center; font-size:12px; color:#67749c; line-height:1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="hbtn" href="/index.html">← 返回门户</a>
+    <h1>🐉 修仙<span class="gold">打妖兽</span></h1>
+    <button class="hbtn" id="resetBtn">重开一局</button>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="k">💎 灵石</div><div class="v gold" id="stStones">0</div></div>
+    <div class="stat"><div class="k">✨ 修为</div><div class="v cyan" id="stXiu">0</div></div>
+    <div class="stat"><div class="k">⚔️ 点击伤害</div><div class="v" id="stClick">1</div></div>
+    <div class="stat"><div class="k">🤖 每秒伤害</div><div class="v" id="stDps">0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="stage-line">
+      <span class="realm" id="realmLabel">炼气 · 一层</span>
+      <span class="dots" id="dots"></span>
+      <span class="stage" id="stageLabel">第 1 关</span>
+    </div>
+    <div class="monster-zone" id="zone">
+      <button id="monsterBtn" title="点它！">🐺</button>
+      <div class="mname" id="mName">赤目妖狼</div>
+      <div class="hpbar"><div id="hpFill"></div></div>
+      <div class="hptext" id="hpText">10 / 10</div>
+    </div>
+    <div class="hint">点妖兽攻击 · 暴击 3 倍伤害 · 每关打满 10 只前进，每 5 关一只 Boss</div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>🌟 突破境界</h2>
+      <button class="bigbtn" id="upBtn">突破</button>
+      <div class="mini" id="upInfo"></div>
+    </div>
+    <div class="card">
+      <h2>📜 修炼日志</h2>
+      <ul id="log"></ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🛒 坊市 <span class="sub">花灵石变强，数值滚起来</span></h2>
+    <div class="shop" id="shop"></div>
+  </div>
+
+  <footer>存档保存在本浏览器里，关掉页面不会丢 · 离线期间按每秒伤害的一半结算灵石（最多 8 小时）<br>小葭出品 · 点点点修仙，摸鱼不耽误干活</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+var SAVE_KEY = "xiuxian_game_v1";
+var REALMS = ["炼气","筑基","开光","融合","金丹","元婴","化神","炼虚","合体","大乘","渡劫"];
+var LAYERS = ["一","二","三","四","五","六","七","八","九"];
+var MONSTERS = [
+  { e:"🐺", n:"赤目妖狼" }, { e:"🦊", n:"三尾妖狐" }, { e:"🐍", n:"青鳞蛇妖" },
+  { e:"🦂", n:"毒尾蝎王" }, { e:"🕷️", n:"八眼蛛妖" }, { e:"🐗", n:"獠牙山猪精" },
+  { e:"🦇", n:"夜翼蝠妖" }, { e:"🐸", n:"吞金蟾" }, { e:"🦉", n:"啼魂枭" },
+  { e:"🐉", n:"蛟龙幼崽" }, { e:"👹", n:"赤发夜叉" }, { e:"🧌", n:"搬山巨魔" },
+  { e:"🦑", n:"深渊章妖" }, { e:"🐙", n:"千触海魔" }, { e:"🦖", n:"裂地暴龙兽" }
+];
+var BOSSES = [
+  { e:"👺", n:"血瞳魔君" }, { e:"🐲", n:"覆海蛟王" }, { e:"💀", n:"白骨夫人" },
+  { e:"🔥", n:"焚天炎魔" }, { e:"👑", n:"万妖之王" }
+];
+var SHOP = [
+  { id:"sword",  icon:"🗡️", name:"飞剑",   desc:"点击伤害 +2（受境界加成）",        base:15,  grow:1.55 },
+  { id:"puppet", icon:"🤖", name:"傀儡",   desc:"每秒自动伤害 +1（受境界加成）",    base:40,  grow:1.60 },
+  { id:"crit",   icon:"🎯", name:"暴击符", desc:"暴击率 +2%（满级 20 级）",         base:150, grow:2.10, max:20 },
+  { id:"pill",   icon:"💊", name:"聚灵丹", desc:"修为获取 +25%",                    base:100, grow:2.00 }
+];
+function defState() {
+  return { stones:0, xiu:0, realm:0, layer:1, stage:1, kills:0,
+           sword:0, puppet:0, crit:0, pill:0, totalKills:0, last:Date.now() };
+}
+var S = defState();
+try {
+  var raw = localStorage.getItem(SAVE_KEY);
+  if (raw) { var p = JSON.parse(raw); for (var k in S) if (p[k] !== undefined) S[k] = p[k]; }
+} catch (e) {}
+var monster = null;
+
+function realmMult() { return Math.pow(2, S.realm) * (1 + (S.layer - 1) * 0.15); }
+function clickDmg()  { return (1 + S.sword * 2) * realmMult(); }
+function dps()       { return S.puppet * realmMult(); }
+function critRate()  { return Math.min(0.05 + S.crit * 0.02, 0.5); }
+function xiuMult()   { return 1 + S.pill * 0.25; }
+function isBossStage(stage) { return stage % 5 === 0; }
+function shopCost(item) { return Math.round(item.base * Math.pow(item.grow, S[item.id])); }
+function upCost() { return Math.round(60 * Math.pow(3.2, S.realm) * S.layer); }
+
+function fmt(n) {
+  n = Math.floor(n);
+  if (n < 10000) return "" + n;
+  var units = ["万","亿","兆","京","垓","秭","穰","沟","涧","正","载","极"];
+  var u = -1, v = n;
+  while (v >= 10000 && u < units.length - 1) { v /= 10000; u++; }
+  return (v >= 100 ? Math.floor(v) : Math.round(v * 100) / 100) + units[u];
+}
+function newMonster() {
+  var boss = isBossStage(S.stage) && S.kills === 9;
+  var src = boss ? BOSSES[Math.floor(Math.random() * BOSSES.length)]
+                 : MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
+  var hp = Math.round(10 * Math.pow(1.52, S.stage - 1) * (1 + S.realm * 0.6) * (boss ? 8 : 1));
+  monster = { name: src.n, emoji: src.e, hp: hp, maxHp: hp, boss: boss };
+}
+function rewards(boss) {
+  var stones = Math.round((5 + S.stage * 2) * Math.pow(1.32, S.stage - 1) * (boss ? 5 : 1));
+  var xiu = Math.round((1 + S.stage * 0.5) * (boss ? 5 : 1) * xiuMult());
+  return { stones: stones, xiu: xiu };
+}
+function $(id) { return document.getElementById(id); }
+function log(msg) {
+  var li = document.createElement("li");
+  li.textContent = msg;
+  var ul = $("log");
+  ul.insertBefore(li, ul.firstChild);
+  while (ul.children.length > 7) ul.removeChild(ul.lastChild);
+}
+var toastTimer = null;
+function toast(msg) {
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+function save() { S.last = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+</script>
+<script>
+"use strict";
+function render() {
+  $("stStones").textContent = fmt(S.stones);
+  $("stXiu").textContent = fmt(S.xiu);
+  $("stClick").textContent = fmt(clickDmg());
+  $("stDps").textContent = fmt(dps());
+  var realmName = S.realm >= REALMS.length - 1 && S.layer >= 9 ? "渡劫 · 飞升在望" : REALMS[S.realm] + " · " + LAYERS[S.layer - 1] + "层";
+  $("realmLabel").textContent = "境界：" + realmName;
+  $("stageLabel").textContent = "第 " + S.stage + " 关" + (isBossStage(S.stage) ? "（末尾有 Boss）" : "");
+  var dots = "";
+  for (var i = 0; i < 10; i++) dots += i < S.kills ? "●" : "○";
+  $("dots").textContent = dots;
+  if (monster) {
+    $("monsterBtn").textContent = monster.emoji;
+    $("mName").innerHTML = "";
+    $("mName").appendChild(document.createTextNode(monster.name));
+    if (monster.boss) {
+      var b = document.createElement("span");
+      b.className = "boss"; b.textContent = "BOSS";
+      $("mName").appendChild(b);
+    }
+    var pct = Math.max(0, monster.hp / monster.maxHp * 100);
+    $("hpFill").style.width = pct + "%";
+    $("hpText").textContent = fmt(Math.max(0, Math.ceil(monster.hp))) + " / " + fmt(monster.maxHp);
+  }
+  var uc = upCost(), upBtn = $("upBtn");
+  if (S.realm >= REALMS.length - 1 && S.layer >= 9) {
+    upBtn.textContent = "已至渡劫之巅，再点妖兽攒修为，静待飞升";
+    upBtn.disabled = true;
+    $("upInfo").textContent = "境界已满级，伤害加成拉满，剩下的就是刷数值看它涨。";
+  } else {
+    var next = S.layer < 9 ? REALMS[S.realm] + " · " + LAYERS[S.layer] + "层" : REALMS[S.realm + 1] + " · 一层";
+    upBtn.textContent = "突破到 " + next + "（" + fmt(uc) + " 修为）";
+    upBtn.disabled = S.xiu < uc;
+    $("upInfo").innerHTML = "突破后境界加成提升（当前 ×" + (Math.round(realmMult() * 100) / 100) + "），点击和自动伤害一起涨。<br>当前修为 " + fmt(S.xiu) + " / " + fmt(uc);
+  }
+  renderShop();
+}
+function renderShop() {
+  var box = $("shop");
+  box.innerHTML = "";
+  SHOP.forEach(function (item) {
+    var lv = S[item.id];
+    var maxed = item.max !== undefined && lv >= item.max;
+    var cost = shopCost(item);
+    var div = document.createElement("div");
+    div.className = "item";
+    var t = document.createElement("div"); t.className = "t";
+    t.textContent = item.icon + " " + item.name;
+    var lvs = document.createElement("span"); lvs.className = "lv"; lvs.textContent = "Lv." + lv;
+    t.appendChild(lvs);
+    var d = document.createElement("div"); d.className = "d"; d.textContent = item.desc;
+    var btn = document.createElement("button"); btn.className = "buy";
+    if (maxed) { btn.textContent = "已满级"; btn.disabled = true; }
+    else {
+      btn.innerHTML = "购买 · <span class='cost'>💎 " + fmt(cost) + "</span>";
+      btn.disabled = S.stones < cost;
+      btn.onclick = function () {
+        var c = shopCost(item);
+        if (S.stones < c) return;
+        S.stones -= c; S[item.id]++;
+        log("坊市购入 " + item.icon + item.name + " Lv." + S[item.id] + "，花了 " + fmt(c) + " 灵石");
+        save(); render();
+      };
+    }
+    div.appendChild(t); div.appendChild(d); div.appendChild(btn);
+    box.appendChild(div);
+  });
+}
+function floatDmg(amount, crit, x, y) {
+  var zone = $("zone");
+  var s = document.createElement("span");
+  s.className = "float" + (crit ? " crit" : "");
+  s.textContent = (crit ? "暴击 " : "-") + fmt(amount);
+  s.style.left = (x - 20 + (Math.random() * 30 - 15)) + "px";
+  s.style.top = (y - 10) + "px";
+  zone.appendChild(s);
+  setTimeout(function () { s.remove(); }, 820);
+}
+function killMonster() {
+  var r = rewards(monster.boss);
+  S.stones += r.stones; S.xiu += r.xiu; S.totalKills++; S.kills++;
+  if (monster.boss) { log("💥 击杀 Boss「" + monster.name + "」！灵石 +" + fmt(r.stones) + "，修为 +" + fmt(r.xiu)); toast("Boss 击杀！灵石 +" + fmt(r.stones)); }
+  if (S.kills >= 10) {
+    S.kills = 0; S.stage++;
+    log("🚪 通关，前进到第 " + S.stage + " 关" + (isBossStage(S.stage) ? "，这一关尽头有 Boss" : ""));
+  }
+  newMonster();
+}
+function dealDamage(amount, crit, x, y) {
+  if (!monster) return;
+  monster.hp -= amount;
+  if (x !== undefined) floatDmg(amount, crit, x, y);
+  var btn = $("monsterBtn");
+  btn.classList.remove("hit"); void btn.offsetWidth; btn.classList.add("hit");
+  if (monster.hp <= 0) killMonster();
+  render();
+}
+$("monsterBtn").addEventListener("click", function (ev) {
+  var crit = Math.random() < critRate();
+  var amount = clickDmg() * (crit ? 3 : 1);
+  var rect = $("zone").getBoundingClientRect();
+  dealDamage(amount, crit, ev.clientX - rect.left, ev.clientY - rect.top);
+});
+$("upBtn").addEventListener("click", function () {
+  var uc = upCost();
+  if (S.xiu < uc) return;
+  S.xiu -= uc;
+  if (S.layer < 9) S.layer++; else { S.realm++; S.layer = 1; }
+  var name = REALMS[S.realm] + " · " + LAYERS[S.layer - 1] + "层";
+  log("🌟 突破成功！境界提升到 " + name + "，伤害加成 ×" + (Math.round(realmMult() * 100) / 100));
+  toast("突破成功：" + name);
+  newMonster(); save(); render();
+});
+$("resetBtn").addEventListener("click", function () {
+  if (!confirm("确定要散功重修吗？灵石、修为、境界和坊市等级都会清零。")) return;
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  S = defState(); newMonster(); render();
+  log("散功重修，一切从炼气一层重新开始。");
+});
+
+/* 离线收益：按每秒伤害的一半结算灵石，最多 8 小时 */
+(function offline() {
+  var away = Math.floor((Date.now() - (S.last || Date.now())) / 1000);
+  var d = dps();
+  if (away > 60 && d > 0) {
+    var gain = Math.floor(d * Math.min(away, 8 * 3600) * 0.5);
+    if (gain > 0) {
+      S.stones += gain;
+      setTimeout(function () { toast("离线修炼 " + Math.floor(away / 60) + " 分钟，傀儡替你攒了 " + fmt(gain) + " 灵石"); log("🕐 离线收益：灵石 +" + fmt(gain)); }, 400);
+    }
+  }
+})();
+
+newMonster();
+render();
+log("来到第 1 关，点妖兽开打。打怪掉灵石和修为，灵石去坊市消费，修为攒着突破境界。");
+setInterval(function () {
+  var d = dps();
+  if (d > 0 && monster) {
+    monster.hp -= d * 0.1;
+    if (monster.hp <= 0) { killMonster(); }
+    render();
+  }
+}, 100);
+setInterval(save, 5000);
+window.addEventListener("beforeunload", save);
+</script>
+</body>
+</html>

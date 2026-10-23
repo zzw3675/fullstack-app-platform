@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理中心 · 全栈网页应用管理平台</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937}
+  #loginBox{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+  #loginBox .card{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:28px 24px;width:100%;max-width:380px}
+  #loginBox h1{font-size:19px;color:#0A2540;margin:0 0 6px}
+  #loginBox .sub{font-size:13px;color:#8A94A6;margin-bottom:16px;line-height:1.6}
+  .tabs{display:flex;gap:8px;margin-bottom:6px}
+  .tabs button{flex:1;height:36px;border-radius:8px;border:1px solid #C3D2E2;background:#fff;font-size:13px;cursor:pointer;color:#5B6573}
+  .tabs button.on{background:#0A2540;border-color:#0A2540;color:#fff;font-weight:600}
+  label{display:block;font-size:13px;color:#5B6573;margin:12px 0 6px}
+  input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;border:1px solid #D8E1EC;border-radius:8px;padding:9px 12px;font-size:14px;background:#fff;font-family:inherit}
+  textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55}
+  input:focus,select:focus,textarea:focus{border-color:#2563EB;outline:none}
+  .btn{height:38px;padding:0 16px;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#14365E}
+  .btn.ghost{background:#fff;color:#0A2540;border:1px solid #C3D2E2;font-weight:500}
+  .btn.danger{background:#C0392B}
+  .btn.sm{height:30px;padding:0 10px;font-size:12px}
+  #loginMsg{font-size:13px;color:#C0392B;min-height:18px;margin-top:10px;text-align:center}
+  #shell{display:none;min-height:100vh}
+  .layout{display:flex;min-height:100vh}
+  aside{width:208px;background:#0A2540;border-right:3px solid #22C3D6;color:#fff;display:flex;flex-direction:column;padding:18px 0;flex-shrink:0}
+  aside .brand{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
+  aside .brand .b1{font-size:16px;font-weight:700}
+  aside .brand .b2{font-size:12px;opacity:.7;margin-top:2px}
+  aside .whoami{padding:10px 20px;font-size:12px;color:#9FB4C8;border-bottom:1px solid rgba(255,255,255,.15);line-height:1.6}
+  aside nav{padding:12px 10px;display:flex;flex-direction:column;gap:4px}
+  aside nav button{text-align:left;background:transparent;border:none;color:#D6E2EE;font-size:14px;padding:10px 12px;border-radius:8px;cursor:pointer}
+  aside nav button.on{background:rgba(34,195,214,.20);color:#fff;font-weight:600}
+  aside nav button:hover{background:rgba(255,255,255,.1)}
+  aside .foot{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,.15);display:flex;flex-direction:column;gap:4px}
+  aside .foot button{text-align:left;background:transparent;border:none;color:#9FB4C8;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer}
+  aside .foot button:hover{background:rgba(255,255,255,.1);color:#fff}
+  main{flex:1;padding:22px 22px 50px;min-width:0}
+  .panel{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:20px}
+  .panel h2{margin:0 0 4px;font-size:17px;color:#0A2540}
+  .panel .hint{font-size:13px;color:#8A94A6;margin-bottom:16px;line-height:1.6}
+  .rowbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .rowbar .sp{flex:1}
+  .viewtabs{display:flex;gap:8px}
+  .viewtabs button{height:32px;padding:0 14px;border-radius:8px;border:1px solid #C3D2E2;background:#fff;font-size:13px;cursor:pointer;color:#5B6573}
+  .viewtabs button.on{background:#0A2540;border-color:#0A2540;color:#fff;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:#5B6573;font-weight:600;font-size:13px;padding:8px 10px;border-bottom:2px solid #E1E9F2}
+  td{padding:9px 10px;border-bottom:1px solid #EDF1F6;vertical-align:middle}
+  tr:hover td{background:#F7FAFC}
+  .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:#EAF1FE;color:#2563EB}
+  .tag.off{background:#F3F4F6;color:#9CA3AF}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .formgrid .full{grid-column:1/-1}
+  .checks{display:flex;flex-wrap:wrap;gap:8px 18px;padding:10px 12px;border:1px solid #D8E1EC;border-radius:8px;background:#F9FBFD}
+  .checks label{display:inline-flex;gap:6px;align-items:center;margin:0;font-size:14px;color:#1F2937}
+  td select{padding:5px 8px;font-size:13px;height:32px}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0A2540;color:#fff;font-size:14px;padding:10px 18px;border-radius:10px;display:none;z-index:50}
+  .err{color:#C0392B;font-size:13px;min-height:18px}
+  .org-branch{border:1px solid #E1E9F2;border-radius:10px;margin-bottom:12px;background:#fff}
+  .org-bhead{padding:10px 14px;font-weight:700;color:#0A2540;background:#F6FAFD;border-bottom:1px solid #E1E9F2;border-radius:10px 10px 0 0;font-size:14px}
+  .org-kids{padding:6px 14px 10px 22px}
+  .org-user{padding:9px 0;border-bottom:1px dashed #EDF1F6}
+  .org-user:last-child{border-bottom:none}
+  .org-uhead{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .org-uname{font-weight:600;color:#1F2937}
+  .org-uemail{color:#8A94A6;font-size:13px}
+  .org-udate{color:#8A94A6;font-size:12px;margin-left:auto}
+  .org-uctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px}
+  .org-uctl select{height:32px;border:1px solid #D8E1EC;border-radius:7px;padding:0 8px;font-size:13px;background:#fff}
+  .org-none{color:#8A94A6;font-size:13px;padding:6px 0}
+  .tree-sec{margin-bottom:18px}
+  .tree-sec-h{font-weight:700;color:#0A2540;font-size:15px;margin:0 0 8px}
+  .tree-box{background:#fff;border:1px solid #E1E9F2;border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .tree-root{display:inline-flex;align-items:center;gap:8px;background:#0A2540;color:#fff;font-weight:700;font-size:14px;padding:8px 14px;border-radius:9px}
+  .tree-root .tn{font-weight:400;font-size:12px;opacity:.85}
+  .tree{list-style:none;margin:2px 0 0 18px;padding-left:30px;position:relative}
+  .tree li{position:relative;padding:5px 0;list-style:none}
+  .tree li::before{content:"";position:absolute;top:26px;left:-30px;width:30px;border-top:2px solid #D8E1EC}
+  .tree li::after{content:"";position:absolute;top:0;bottom:0;left:-30px;border-left:2px solid #D8E1EC}
+  .tree li:last-child::after{bottom:auto;height:26px}
+  .tnode{display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid #D8E1EC;border-radius:10px;padding:7px 12px 7px 8px;cursor:pointer;font-size:14px;color:#1F2937;text-align:left}
+  .tnode:hover{border-color:#2563EB;background:#F8FBFF}
+  .tnode .av{width:30px;height:30px;border-radius:50%;background:#EAF1FE;color:#2563EB;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+  .tnode .em{color:#8A94A6;font-size:12px}
+  .lvb{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600}
+  .lv1{background:#FEF3C7;color:#92400E}.lv2{background:#EAF1FE;color:#2563EB}.lv3{background:#EEF2F6;color:#5B6573}
+  .loose{display:flex;flex-wrap:wrap;gap:10px}
+  @media (max-width:720px){
+    .layout{flex-direction:column}
+    aside{width:100%;padding:10px 0}
+    aside nav{flex-direction:row;overflow-x:auto}
+    aside .foot{flex-direction:row}
+    .formgrid{grid-template-columns:1fr}
+  }
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+
+<div id="loginBox">
+  <div class="card">
+    <h1>管理中心</h1>
+    <div class="sub" id="loginSub">超级管理员登录后能管全部；二级管理员用自己的账号登录，只能管本组页面。</div>
+    <div class="tabs">
+      <button id="tabSuper" class="on" onclick="switchTab('super')">超级管理员</button>
+      <button id="tabUser" onclick="switchTab('user')">管理员账号</button>
+    </div>
+    <div id="formSuper">
+      <label>邮箱</label>
+      <input id="admEmail" type="email" value="admin@example.com" autocomplete="username">
+      <label>超级管理员密码</label>
+      <input id="admPw" type="password" autocomplete="current-password" placeholder="密码">
+      <button class="btn" style="width:100%;margin-top:18px" id="admLoginBtn">进入管理中心</button>
+    </div>
+    <div id="formUser" style="display:none">
+      <label>管理员邮箱（一级 / 二级管理员的账号）</label>
+      <input id="usrEmail" type="email" autocomplete="username" placeholder="name@example.com">
+      <label>密码</label>
+      <input id="usrPw" type="password" autocomplete="current-password" placeholder="密码">
+      <button class="btn" style="width:100%;margin-top:18px" id="usrLoginBtn">以管理员账号进入</button>
+    </div>
+    <div id="loginMsg"></div>
+    <div style="text-align:center;margin-top:6px"><a href="/" style="font-size:13px;color:#2563EB;text-decoration:none">← 返回门户</a></div>
+  </div>
+</div>
+
+<div id="shell">
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <div class="b1">管理中心</div>
+        <div class="b2">全栈网页应用管理平台</div>
+      </div>
+      <div class="whoami" id="whoami"></div>
+      <nav>
+        <button data-sec="pages" class="on">📄 门户管理</button>
+        <button data-sec="templates" id="navTemplates">🧩 模板管理</button>
+        <button data-sec="groups" data-super="1">🗂️ 分组管理</button>
+        <button data-sec="users" data-super="1">👥 用户管理</button>
+        <button data-sec="logs">📜 操作日志</button>
+        <button data-sec="settings" data-super="1">⚙️ 站点设置</button>
+      </nav>
+      <div class="foot">
+        <button onclick="location.href='/'">← 返回门户</button>
+        <button onclick="admLogout()">退出管理</button>
+      </div>
+    </aside>
+    <main>
+      <!-- 页面管理 -->
+      <section id="sec-pages">
+        <div class="panel">
+          <h2>门户管理</h2>
+          <div class="hint">管理员在这里管理所有门户的状态：改名、改权限、换负责人、发布 / 停用、移入回收站。新建门户不在这里——请到平台首页点「从模板新建」，建好后会自动出现在这份清单里。从应用模板建出来的项目（检查表应用、记账本）在下面这份清单里治理。</div>
+          <div class="rowbar">
+            <select id="pgTplFilter" onchange="renderPages()" style="height:36px;border:1px solid #D8E1EC;border-radius:8px;padding:0 8px;font-size:13px"><option value="">全部模板</option></select>
+            <div class="viewtabs">
+              <button id="vtLive" class="on" onclick="setPagesView('live')">已发布页面</button>
+              <button id="vtTrash" onclick="setPagesView('trash')">🗑️ 回收站</button>
+            </div>
+            <div class="sp"></div>
+            <span style="font-size:13px;color:#8A94A6" id="pagesCount"></span>
+          </div>
+          <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th style="width:44px"></th><th>标题</th><th>标识</th><th>类型</th><th>负责人</th><th>来源模板</th><th>谁能看</th><th>状态</th><th style="width:170px">操作</th></tr></thead>
+            <tbody id="pagesBody"><tr><td colspan="9" style="color:#8A94A6">加载中…</td></tr></tbody>
+          </table>
+          </div>
+          <div style="margin-top:26px;border-top:2px solid #E1E9F2;padding-top:16px">
+            <h2 style="font-size:15px">应用项目（检查表应用 / 记账本）</h2>
+            <div class="hint">从应用模板建出来的项目在这里治理：改名、换负责人、改编辑 / 可读范围（都支持指定人多选）、删除（连同里面的检查项、附件、账目一并删，删前自动留历史快照）。新建项目在各应用里完成。</div>
+            <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th style="width:44px"></th><th>项目名</th><th>应用</th><th>负责人</th><th>谁能编辑</th><th>谁能看</th><th>更新</th><th style="width:150px">操作</th></tr></thead>
+              <tbody id="projBody"><tr><td colspan="8" style="color:#8A94A6">加载中…</td></tr></tbody>
+            </table>
+            </div>
+          </div>
+          <div id="projEditor" style="display:none;margin-top:20px;border-top:2px solid #E1E9F2;padding-top:16px">
+            <h2 style="font-size:15px">编辑项目 · <span id="peAppName"></span></h2>
+            <div class="formgrid">
+              <div><label>项目名 *</label><input type="text" id="pe_title"></div>
+              <div><label>负责人</label><select id="pe_owner"></select></div>
+              <div><label>谁能编辑</label><select id="pe_edit" onchange="peScopeToggle()">
+                <option value="all">所有人</option><option value="group">负责人所在组</option><option value="owner">仅负责人</option><option value="users">指定的人（多选）</option></select></div>
+              <div id="peRowEditUsers" style="display:none"><label>能编辑的人</label><div class="checks" id="peEditChecks"></div></div>
+              <div><label>谁能看</label><select id="pe_read" onchange="peScopeToggle()">
+                <option value="all">所有人</option><option value="group">负责人所在组</option><option value="owner">仅负责人（仅自己可见）</option><option value="users">指定的人（多选）</option></select></div>
+              <div id="peRowReadUsers" style="display:none"><label>能看的人</label><div class="checks" id="peReadChecks"></div></div>
+            </div>
+            <div class="err" id="peErr"></div>
+            <div class="rowbar" style="margin-top:8px">
+              <button class="btn" onclick="saveProjEditor()">保存（范围同步到项目内各项）</button>
+              <button class="btn ghost" onclick="closeProjEditor()">取消</button>
+            </div>
+          </div>
+          <div id="editor" style="display:none;margin-top:20px;border-top:2px solid #E1E9F2;padding-top:16px">
+            <h2 id="editorTitle" style="font-size:15px">编辑门户</h2>
+            <div class="formgrid">
+              <div><label>标题 *</label><input type="text" id="f_title" placeholder="如：团队记账"></div>
+              <div><label>标识（英文小写，门户地址用）*</label><input type="text" id="f_slug" placeholder="如：jizhang"></div>
+              <div><label>图标（一个 emoji）</label><input type="text" id="f_icon" placeholder="📒" maxlength="4"></div>
+              <div><label>排序（数字小靠前）</label><input type="number" id="f_sort" value="10"></div>
+              <div><label>负责人</label><select id="f_owner"></select></div>
+              <div><label>类型</label>
+                <select id="f_kind" onchange="kindToggle()">
+                  <option value="html">HTML 页面（把代码贴进来）</option>
+                  <option value="link">外部链接（跳到别的网址）</option>
+                </select>
+              </div>
+              <div><label>谁能看</label>
+                <select id="f_visibility" onchange="visToggle()">
+                  <option value="all">所有登录用户</option>
+                  <option value="users">只给指定的人</option>
+                  <option value="group">只给某个组</option>
+                </select>
+              </div>
+              <div class="full" id="row_url" style="display:none"><label>链接地址</label><input type="text" id="f_url" placeholder="/jizhang.html 或 https://…"></div>
+              <div class="full" id="row_html"><label>HTML 代码</label><textarea id="f_html" rows="14" placeholder="把完整的 HTML 页面代码贴到这里"></textarea></div>
+              <div class="full" id="row_users" style="display:none"><label>指定能看的人</label><div class="checks" id="userChecks"></div></div>
+              <div class="full" id="row_group" style="display:none"><label>指定哪个组</label><select id="f_group"></select></div>
+              <div><label style="display:flex;gap:8px;align-items:center;margin-top:22px"><input type="checkbox" id="f_active" checked style="width:auto"> 已发布（门户上可见）</label></div>
+              <div id="row_appmode"><label style="display:flex;gap:8px;align-items:center;margin-top:22px"><input type="checkbox" id="f_appmode" style="width:auto"> 数据应用模式（页面可读写平台数据；仅一级可用，普通页面不勾更安全）</label></div>
+            </div>
+            <div class="err" id="editorErr"></div>
+            <div class="rowbar" style="margin-top:10px">
+              <button class="btn" onclick="savePage()">保存页面</button>
+              <button class="btn ghost" onclick="closeEditor()">取消</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 模板管理 -->
+      <section id="sec-templates" style="display:none">
+        <div class="panel">
+          <h2>模板管理（模板库）</h2>
+          <div class="hint">模板是“图纸”，由维护者在部署应用或模板时统一登记维护，内容的新增、修改、下线直接跟维护者说。但「谁能用」是权限设置，可以在清单里逐个改（所有人 / 某个组 / 指定的人）——并不是所有模板都给所有人用。改模板不影响已经建好的门户。</div>
+          <div style="overflow-x:auto;margin-top:8px">
+          <table>
+            <thead><tr><th style="width:44px"></th><th>名称</th><th>类型</th><th>说明</th><th>谁能用</th><th>更新</th><th style="width:90px">设置</th></tr></thead>
+            <tbody id="tplsBody"><tr><td colspan="7" style="color:#8A94A6">加载中…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+          <div id="tplScopeBox" style="display:none;margin-top:16px;border-top:2px solid #E1E9F2;padding-top:14px">
+            <h2 id="tsName" style="font-size:15px;margin:0 0 10px">设置谁能用</h2>
+            <div class="formgrid">
+              <div><label>谁能看到并使用这个模板</label>
+                <select id="tsVis" onchange="tsVisToggle()">
+                  <option value="all">所有人</option>
+                  <option value="group">只给某个组</option>
+                  <option value="users">只给指定的人</option>
+                </select>
+              </div>
+              <div class="full" id="tsRowGroup" style="display:none"><label>指定能用的组（可多选）</label><div class="checks" id="tsGroupChecks"></div></div>
+              <div class="full" id="tsRowUsers" style="display:none"><label>指定能用的人</label><div class="checks" id="tsUserChecks"></div></div>
+            </div>
+            <div class="err" id="tsErr"></div>
+            <div class="rowbar" style="margin-top:8px">
+              <button class="btn" onclick="saveTplScope()">保存设置</button>
+              <button class="btn ghost" onclick="closeTplScope()">取消</button>
+            </div>
+          </div>
+      </section>
+
+      <!-- 分组管理 -->
+      <section id="sec-groups" style="display:none">
+        <div class="panel">
+          <h2>分组管理</h2>
+          <div class="hint">先建组，再到「用户管理」里把人分进组。页面可以设置成只给某个组看。每个组可以指定一位组长：在下面的「组长」列里选，或在「用户管理」组织架构的组名旁点「指定组长」。组长一般是二级管理员（一个组可以有好几个二级，组长只定一位）；选了三级成员会同时把 TA 升为二级。</div>
+          <div class="formgrid" style="margin-bottom:6px">
+            <div><label>组名</label><input type="text" id="g_name" placeholder="如：一组"></div>
+            <div><label>备注</label><input type="text" id="g_note" placeholder="这个组是干什么的（可空）"></div>
+            <div style="display:flex;align-items:flex-end;padding-bottom:2px"><button class="btn" onclick="addGroup()">＋ 新建组</button></div>
+          </div>
+          <div class="err" id="groupErr"></div>
+          <div style="overflow-x:auto;margin-top:8px">
+          <table>
+            <thead><tr><th>组名</th><th>备注</th><th>成员数</th><th>组长</th><th style="width:110px">操作</th></tr></thead>
+            <tbody id="groupsBody"><tr><td colspan="4" style="color:#8A94A6">加载中…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 用户管理 -->
+      <section id="sec-users" style="display:none">
+        <div class="panel">
+          <h2>用户管理</h2>
+          <div class="hint">下面按组织架构展示：每个组是一棵树（组长排最前），没分组的人游散在最后，待审核的单列在最上面。点某个人的节点就能打开编辑：定级别、分组、通过审核、改密码、删除都在里面。加人用下面表单（仅超级管理员）。</div>
+          <div class="formgrid" style="margin-bottom:6px">
+            <div><label>姓名</label><input type="text" id="u_name" placeholder="如：张三"></div>
+            <div><label>邮箱（登录用）</label><input type="email" id="u_email" placeholder="name@example.com"></div>
+            <div><label>初始密码（至少 8 位）</label><input type="text" id="u_pw" placeholder="初始密码"></div>
+            <div><label>级别</label>
+              <select id="u_level">
+                <option value="三级" selected>三级（普通用户）</option>
+                <option value="二级">二级（组管理员）</option>
+                <option value="一级">一级（管理员）</option>
+              </select>
+            </div>
+            <div><label>分到哪个组</label><select id="u_group"></select></div>
+            <div style="display:flex;align-items:flex-end;padding-bottom:2px"><button class="btn" onclick="addUser()">＋ 添加用户</button></div>
+          </div>
+          <div class="err" id="userErr"></div>
+          <div id="orgTree" style="margin-top:10px"><div style="color:#8A94A6">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 操作日志 -->
+      <section id="sec-logs" style="display:none">
+        <div class="panel">
+          <h2>操作日志</h2>
+          <div class="hint">管理中心里的关键操作（建页、删页、加人、改级别、改设置等）会自动记在这里，最新 100 条。出问题时先翻这里。（从启用之日起记录，之前的没有。）</div>
+          <div class="rowbar">
+            <button class="btn ghost" onclick="loadLogs()">刷新</button>
+            <div class="sp"></div>
+            <span style="font-size:13px;color:#8A94A6" id="logsCount"></span>
+          </div>
+          <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th style="width:160px">时间</th><th style="width:150px">操作人</th><th style="width:110px">动作</th><th>对象</th><th>详情</th></tr></thead>
+            <tbody id="logsBody"><tr><td colspan="5" style="color:#8A94A6">加载中…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 站点设置 -->
+      <section id="sec-settings" style="display:none">
+        <div class="panel">
+          <h2>站点设置</h2>
+          <div class="hint">门户顶上显示的名字，改完保存立刻生效。</div>
+          <label>站点名称</label>
+          <input type="text" id="s_title" placeholder="全栈网页应用管理平台">
+          <div class="err" id="setErr"></div>
+          <button class="btn" style="margin-top:14px" onclick="saveSettings()">保存设置</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="leaderModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:2000;overflow:auto;padding:24px 14px">
+    <div style="max-width:440px;margin:0 auto;background:#fff;border-radius:12px;padding:22px">
+      <h2 style="margin:0;font-size:16px;color:#0A2540">指定组长 · <span id="ldGroup"></span></h2>
+      <div style="margin-top:12px"><label>组长（从本组成员里选）</label><select id="ldUser" style="width:100%"></select></div>
+      <div style="font-size:12.5px;color:#8A94A6;margin-top:8px">组长一般是二级管理员；选了三级成员会同时把 TA 升为二级。</div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn" style="width:auto" onclick="saveLeaderPicker()">保存</button>
+        <button class="btn ghost" style="width:auto" onclick="closeLeaderPicker()">取消</button>
+      </div>
+    </div>
+  </div>
+<div id="userEditor" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:2000;overflow:auto;padding:24px 14px">
+    <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:22px">
+      <div style="display:flex;align-items:center"><h2 style="margin:0;font-size:17px;color:#0A2540">编辑用户</h2><span style="flex:1"></span><button class="btn ghost sm" onclick="closeUserEditor()">✕ 关闭</button></div>
+      <div style="margin-top:14px;display:grid;gap:12px">
+        <div><label>姓名</label><input type="text" id="ueName"></div>
+        <div><label>邮箱（登录用，不可改）</label><div id="ueEmail" style="font-size:14px;color:#5B6573;padding:4px 0"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label>级别</label><select id="ueLevel"><option value="一级">一级（管理员）</option><option value="二级">二级（组管理员）</option><option value="三级">三级（普通用户）</option></select></div>
+          <div><label>分组</label><select id="ueGroup"></select></div>
+        </div>
+        <div id="ueMeta" style="font-size:13px;color:#8A94A6"></div>
+      </div>
+      <div class="err" id="ueErr"></div>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn" style="width:auto" onclick="saveUserEditor()">保存</button>
+        <button class="btn" style="width:auto;background:#1E9E62" id="ueApprove" onclick="if(editingUser){ approveUser(editingUser); closeUserEditor(); }">通过审核</button>
+        <button class="btn ghost" style="width:auto" onclick="if(editingUser) resetPw(editingUser)">改密码</button>
+        <button class="btn danger" style="width:auto" onclick="if(editingUser){ const u=editingUser; closeUserEditor(); delUser(u); }">删除用户</button>
+      </div>
+    </div>
+  </div>
+<div id="toast"></div>
+
+<script>
+  const TKEY = 'pb_admin_token';
+  const MKEY = 'pb_admin_mode';
+  const UKEY = 'pb_admin_user';
+  let allUsers = [];
+  let allGroups = [];
+  let allPages = [];
+  let settingsMap = {};
+  let editingId = null;
+  let pagesView = 'live';
+
+  const TEMPLATES = {
+    notice: '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>公告</title><style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#fff;color:#1F2937;padding:36px 22px;line-height:1.9}.box{max-width:640px;margin:0 auto}h1{font-size:24px;margin:0 0 6px}.date{color:#8A94A6;font-size:13px;margin-bottom:18px}p{margin:10px 0;color:#374151}</style></head><body><div class="box"><h1>📢 公告标题</h1><div class="date">2026-10-23</div><p>这里写公告内容。第一段交代什么事。</p><p>第二段写细节：时间、地点、要大家做什么。</p></div></body></html>',
+    article: '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>图文页</title><style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#fff;color:#1F2937;line-height:1.9}.hero{background:#0A2540;color:#fff;padding:44px 22px;text-align:center}.hero .e{font-size:52px}.hero h1{margin:10px 0 0;font-size:24px}.box{max-width:680px;margin:0 auto;padding:26px 22px}p{margin:10px 0;color:#374151}img{max-width:100%;border-radius:10px}</style></head><body><div class="hero"><div class="e">🖼️</div><h1>图文标题</h1></div><div class="box"><p>第一段介绍文字。</p><p>需要插图时，把图片地址填到 img 标签里：</p><p><img src="" alt="图片"></p><p>最后一段收尾。</p></div></body></html>',
+    links: '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>常用链接</title><style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#fff;color:#1F2937;padding:30px 22px}.box{max-width:560px;margin:0 auto}h1{font-size:22px}a.btn{display:block;padding:14px 16px;margin:10px 0;border:1px solid #D8E1EC;border-radius:10px;color:#0A2540;text-decoration:none;font-size:15px;background:#F9FBFD}a.btn:hover{background:#EAF1FE}</style></head><body><div class="box"><h1>🔗 常用链接</h1><a class="btn" href="https://example.com">链接一（改成你的地址）</a><a class="btn" href="https://example.com">链接二</a><a class="btn" href="https://example.com">链接三</a></div></body></html>',
+    records: ''
+  };
+  TEMPLATES.records = [
+    '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1"><title>记录本</title>',
+    '<style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#F3F6FA;color:#1F2937}main{max-width:760px;margin:0 auto;padding:20px 16px 40px}.panel{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:18px;margin-bottom:14px}h2{margin:0 0 12px;font-size:16px;color:#0A2540}label{display:block;font-size:13px;color:#5B6573;margin:0 0 6px}input{width:100%;height:40px;border:1px solid #D8E1EC;border-radius:8px;padding:0 10px;font-size:14px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.btn{height:42px;width:100%;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:14px;font-weight:600;cursor:pointer}.btn.ghost{background:#fff;color:#0A2540;border:1px solid #C3D2E2}.btn.sm{height:36px;width:auto;padding:0 14px}table{width:100%;border-collapse:collapse;font-size:14px}th{text-align:left;color:#5B6573;font-size:13px;padding:8px;border-bottom:2px solid #E1E9F2}td{padding:9px 8px;border-bottom:1px solid #EDF1F6}.del{border:1px solid #E5B4AE;background:#fff;color:#C0392B;border-radius:6px;height:28px;padding:0 10px;font-size:12px;cursor:pointer}.rst{border:1px solid #BFE3CF;background:#fff;color:#1E9E62;border-radius:6px;height:28px;padding:0 10px;font-size:12px;cursor:pointer;margin-right:6px}.bar2{display:flex;gap:8px;align-items:center;margin-bottom:10px}.bar2 .sp{flex:1}</style></head><body><main>',
+    '<div class="panel"><h2>✍️ 记一条</h2><div class="row">',
+    '<div><label>日期</label><input type="date" id="d"></div>',
+    '<div><label>事项</label><input type="text" id="item" placeholder="什么事"></div>',
+    '<div><label>备注</label><input type="text" id="note" placeholder="可空"></div>',
+    '<div><label>&nbsp;</label><button class="btn" id="add">记上</button></div>',
+    '</div></div>',
+    '<div class="panel"><div class="bar2"><h2 style="margin:0">📋 记录</h2><div class="sp"></div><button class="btn ghost sm" id="exp">导出 CSV</button><button class="btn ghost sm" id="trashBtn">回收站</button></div><table><thead><tr><th>日期</th><th>事项</th><th>备注</th><th>记录人</th><th></th></tr></thead><tbody id="tb"><tr><td colspan="5" style="color:#8A94A6">加载中…</td></tr></tbody></table></div>',
+    '<div class="panel" id="trashPanel" style="display:none"><h2>🗑️ 回收站</h2><table><thead><tr><th>日期</th><th>事项</th><th>备注</th><th>记录人</th><th></th></tr></thead><tbody id="ttb"><tr><td colspan="5" style="color:#8A94A6">空的</td></tr></tbody></table></div>',
+    '</main>',
+    '<scr' + 'ipt src="/assets/auth.js"></scr' + 'ipt>',
+    '<scr' + 'ipt>',
+    'const APP="__APP_SLUG__"; let ROWS=[];',
+    'if (pbRequireAuth()) init();',
+    'function parse(rec){let c={};try{c=JSON.parse(rec.content||"{}")}catch(e){} c._id=rec.id; c._who=rec.who||""; c._owner=rec.owner||""; return c;}',
+    'async function logAct(action,detail){try{const u=pbUser();await pbApi("/api/collections/audit_logs/records",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({actor:(u&&(u.name||u.email))||"",action:action,target:"记录页:"+APP,detail:detail})});}catch(e){}}',
+    'async function init(){document.getElementById("d").value=new Date().toISOString().slice(0,10);document.getElementById("add").addEventListener("click",add);document.getElementById("exp").addEventListener("click",expCsv);document.getElementById("trashBtn").addEventListener("click",()=>{const p=document.getElementById("trashPanel");p.style.display=p.style.display==="none"?"block":"none";});load();}',
+    'async function load(){try{const r=await pbApi("/api/collections/app_data/records?perPage=500&sort=-created&filter="+encodeURIComponent("(app=\x27"+APP+"\x27)"));ROWS=(r.items||[]).map(parse);render();}catch(e){}}',
+    'function render(){const me=pbUser()||{};const mine=c=>!c._owner||c._owner===me.id||me.level==="一级";const tb=document.getElementById("tb");tb.innerHTML="";const live=ROWS.filter(c=>!c.trashed);live.forEach(c=>{const tr=document.createElement("tr");tr.innerHTML="<td></td><td></td><td></td><td></td><td></td>";tr.children[0].textContent=c.d||"";tr.children[1].textContent=c.item||"";tr.children[2].textContent=c.note||"";tr.children[3].textContent=c._who;if(mine(c)){const b=document.createElement("button");b.className="del";b.textContent="删除";b.addEventListener("click",()=>trash(c,true));tr.children[4].appendChild(b);}tb.appendChild(tr);});if(!live.length)tb.innerHTML="<tr><td colspan=\x275\x27 style=\x27color:#8A94A6\x27>还没有记录</td></tr>";const tt=document.getElementById("ttb");tt.innerHTML="";const dead=ROWS.filter(c=>c.trashed);dead.forEach(c=>{const tr=document.createElement("tr");tr.innerHTML="<td></td><td></td><td></td><td></td><td></td>";tr.children[0].textContent=c.d||"";tr.children[1].textContent=c.item||"";tr.children[2].textContent=c.note||"";tr.children[3].textContent=c._who;if(mine(c)){const r1=document.createElement("button");r1.className="rst";r1.textContent="恢复";r1.addEventListener("click",()=>trash(c,false));const r2=document.createElement("button");r2.className="del";r2.textContent="彻底删除";r2.addEventListener("click",()=>purge(c));tr.children[4].appendChild(r1);tr.children[4].appendChild(r2);}tt.appendChild(tr);});if(!dead.length)tt.innerHTML="<tr><td colspan=\x275\x27 style=\x27color:#8A94A6\x27>空的</td></tr>";}',
+    'async function setTrash(c,val){const { _id, _who, _owner, ...rest } = c; rest.trashed = val; await pbApi("/api/collections/app_data/records/"+c._id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:JSON.stringify(rest)})});}',
+    'async function trash(c,val){await setTrash(c,val); logAct(val?"删除记录":"恢复记录",(c.d||"")+" "+(c.item||"")); load();}',
+    'async function purge(c){if(!confirm("彻底删除这条？删了就没了。"))return;await pbApi("/api/collections/app_data/records/"+c._id,{method:"DELETE"});logAct("彻底删除记录",(c.d||"")+" "+(c.item||""));load();}',
+    'async function add(){const item=document.getElementById("item").value.trim();if(!item){alert("事项不能为空");return;}const u=pbUser();const content=JSON.stringify({d:document.getElementById("d").value,item:item,note:document.getElementById("note").value.trim()});await pbApi("/api/collections/app_data/records",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({app:APP,content:content,who:(u&&(u.name||u.email))||"",owner:u?u.id:""})});logAct("新建记录",item);document.getElementById("item").value="";document.getElementById("note").value="";load();}',
+    'function expCsv(){const live=ROWS.filter(c=>!c.trashed);const q=v=>"\x22"+String(v==null?"":v).replace(/\x22/g,"\x22\x22")+"\x22";const lines=[["日期","事项","备注","记录人"].join(",")];live.forEach(c=>lines.push([c.d,c.item,c.note,c._who].map(q).join(",")));const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=APP+"-记录.csv";a.click();URL.revokeObjectURL(a.href);}',
+    '</scr' + 'ipt></body></html>'
+  ].join('\n');
+
+  function toast(t){
+    const el = document.getElementById('toast');
+    el.textContent = t; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 2200);
+  }
+  function mode(){ return sessionStorage.getItem(MKEY) || 'super'; }
+  function me(){ try { return JSON.parse(sessionStorage.getItem(UKEY)); } catch(e){ return null; } }
+  function isSuper(){ return mode() === 'super'; }
+  function admToken(){ return sessionStorage.getItem(TKEY); }
+  function actorName(){
+    if (isSuper()) return '超级管理员';
+    const u = me(); return (u && (u.name || u.email)) || '管理员';
+  }
+  async function admApi(path, opts){
+    opts = opts || {};
+    const headers = Object.assign({'Content-Type': 'application/json'}, opts.headers || {}, {'Authorization': admToken()});
+    const r = await fetch(path, Object.assign({}, opts, {headers}));
+    if (r.status === 401){ admLogout(); throw new Error('登录已过期，请重新登录'); }
+    const txt = await r.text();
+    let j = null; try { j = txt ? JSON.parse(txt) : null; } catch(e){}
+    if (!r.ok) throw new Error((j && j.message) || ('出错了（' + r.status + '）'));
+    return j;
+  }
+  async function auditLog(action, target, detail){
+    try {
+      await admApi('/api/collections/audit_logs/records', {
+        method: 'POST',
+        body: JSON.stringify({actor: actorName(), action, target: target || '', detail: detail || ''})
+      });
+    } catch(e){}
+  }
+  function admLogout(){
+    sessionStorage.removeItem(TKEY); sessionStorage.removeItem(MKEY); sessionStorage.removeItem(UKEY);
+    location.reload();
+  }
+  function groupName(id){
+    const g = allGroups.find(x => x.id === id);
+    return g ? g.name : '（无）';
+  }
+
+  function switchTab(which){
+    document.getElementById('tabSuper').className = which === 'super' ? 'on' : '';
+    document.getElementById('tabUser').className = which === 'user' ? 'on' : '';
+    document.getElementById('formSuper').style.display = which === 'super' ? 'block' : 'none';
+    document.getElementById('formUser').style.display = which === 'user' ? 'block' : 'none';
+    document.getElementById('loginMsg').textContent = '';
+  }
+
+  document.getElementById('admLoginBtn').addEventListener('click', admLogin);
+  document.getElementById('admPw').addEventListener('keydown', e => { if (e.key === 'Enter') admLogin(); });
+  document.getElementById('usrLoginBtn').addEventListener('click', usrLogin);
+  document.getElementById('usrPw').addEventListener('keydown', e => { if (e.key === 'Enter') usrLogin(); });
+
+  async function admLogin(){
+    const identity = document.getElementById('admEmail').value.trim();
+    const password = document.getElementById('admPw').value;
+    const msg = document.getElementById('loginMsg');
+    if (!identity || !password){ msg.textContent = '请填邮箱和密码'; return; }
+    msg.textContent = '';
+    try {
+      const r = await fetch('/api/collections/_superusers/auth-with-password', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({identity, password})
+      });
+      if (!r.ok) throw new Error('bad');
+      const j = await r.json();
+      sessionStorage.setItem(TKEY, j.token);
+      sessionStorage.setItem(MKEY, 'super');
+      sessionStorage.removeItem(UKEY);
+      enterShell();
+    } catch(e){ msg.textContent = '登录失败：超级管理员邮箱或密码不对'; }
+  }
+  async function usrLogin(){
+    const identity = document.getElementById('usrEmail').value.trim();
+    const password = document.getElementById('usrPw').value;
+    const msg = document.getElementById('loginMsg');
+    if (!identity || !password){ msg.textContent = '请填邮箱和密码'; return; }
+    msg.textContent = '';
+    try {
+      const r = await fetch('/api/collections/users/auth-with-password', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({identity, password})
+      });
+      if (!r.ok) throw new Error('bad');
+      const j = await r.json();
+      const lv = j.record && j.record.level;
+      if (lv !== '一级' && lv !== '二级'){ msg.textContent = '这个账号不是管理员（需要一级或二级），普通账号请从门户登录'; return; }
+      if (j.record.approved !== true){ msg.textContent = '这个账号还没通过审核'; return; }
+      sessionStorage.setItem(TKEY, j.token);
+      sessionStorage.setItem(MKEY, 'user');
+      sessionStorage.setItem(UKEY, JSON.stringify(j.record));
+      enterShell();
+    } catch(e){ msg.textContent = '登录失败：邮箱或密码不对'; }
+  }
+
+  document.querySelectorAll('aside nav button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('aside nav button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      ['pages','templates','groups','users','logs','settings'].forEach(s => {
+        document.getElementById('sec-' + s).style.display = (s === b.dataset.sec) ? 'block' : 'none';
+      });
+      if (b.dataset.sec === 'logs') loadLogs();
+      if (b.dataset.sec === 'templates') loadTemplatesAdmin();
+    });
+  });
+
+  async function enterShell(){
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('shell').style.display = 'block';
+    const u = me();
+    document.getElementById('whoami').textContent = isSuper()
+      ? '当前：超级管理员（全部权限）'
+      : ('当前：' + (u ? (u.name || u.email) : '') + '（' + (u ? (u.level || '') : '') + '管理员' + (u && u.group ? ' · ' + '本组页面管理' : '') + '）');
+    document.querySelectorAll('aside nav button[data-super]').forEach(b => {
+      b.style.display = isSuper() ? 'block' : 'none';
+    });
+    const navT = document.getElementById('navTemplates');
+    if (navT) navT.style.display = (isSuper() || (u && u.level === '一级')) ? 'block' : 'none';
+    await loadTemplateLib();
+    await loadGroups();
+    if (isSuper()) await loadUsers();
+    else { try { const r = await admApi('/api/collections/users/records?perPage=200&sort=created'); allUsers = r.items || []; } catch(e){ allUsers = []; } }
+    await loadPages();
+    await loadProjects();
+    if (isSuper()) await loadSettings();
+  }
+
+  /* ---------- 分组 ---------- */
+  async function loadGroups(){
+    try {
+      const r = await admApi('/api/collections/groups/records?perPage=200&sort=name');
+      allGroups = r.items || [];
+      if (isSuper()) {
+        const tb = document.getElementById('groupsBody');
+        tb.innerHTML = '';
+        allGroups.forEach(g => {
+          const n = allUsers.filter(u => u.group === g.id).length;
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td></td><td style="color:#8A94A6"></td><td></td><td></td><td><button class="btn danger sm">删除</button></td>';
+          tr.children[0].textContent = g.name;
+          tr.children[1].textContent = g.note || '';
+          tr.children[2].textContent = n + ' 人';
+          const lsel = document.createElement('select');
+          lsel.style.cssText = 'max-width:200px;padding:6px 8px;border:1px solid #D8E1EC;border-radius:8px;font-size:13px';
+          const lo0 = document.createElement('option'); lo0.value = ''; lo0.textContent = '（未指定）'; lsel.appendChild(lo0);
+          allUsers.filter(u => u.group === g.id && u.approved === true).forEach(u => {
+            const o = document.createElement('option'); o.value = u.id;
+            o.textContent = (u.name || u.email) + (u.level === '三级' ? '' : ' · ' + u.level);
+            lsel.appendChild(o);
+          });
+          lsel.value = g.leader || '';
+          lsel.addEventListener('change', () => setGroupLeader(g, lsel.value));
+          tr.children[3].appendChild(lsel);
+          tr.querySelector('button').addEventListener('click', () => delGroup(g, n));
+          tb.appendChild(tr);
+        });
+        if (!allGroups.length) tb.innerHTML = '<tr><td colspan="5" style="color:#8A94A6">还没有组，先在上面建一个。</td></tr>';
+      }
+      fillGroupSelects();
+    } catch(e){ toast(e.message); }
+  }
+  function fillGroupSelects(){
+    const mk = (sel, withNone) => {
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = '';
+      if (withNone) sel.innerHTML = '<option value="">（不分组）</option>';
+      let list = allGroups;
+      if (!isSuper()) { const u = me(); list = allGroups.filter(g => u && g.id === u.group); }
+      list.forEach(g => {
+        const o = document.createElement('option');
+        o.value = g.id; o.textContent = g.name;
+        sel.appendChild(o);
+      });
+      if (cur) sel.value = cur;
+    };
+    mk(document.getElementById('u_group'), true);
+    mk(document.getElementById('f_group'), false);
+    mk(document.getElementById('t_group'), false);
+    mk(document.getElementById('w_group'), false);
+  }
+  async function addGroup(){
+    const name = document.getElementById('g_name').value.trim();
+    const note = document.getElementById('g_note').value.trim();
+    const err = document.getElementById('groupErr');
+    err.textContent = '';
+    if (!name){ err.textContent = '组名必填'; return; }
+    try {
+      await admApi('/api/collections/groups/records', {method: 'POST', body: JSON.stringify({name, note})});
+      auditLog('新建组', name, note);
+      document.getElementById('g_name').value = '';
+      document.getElementById('g_note').value = '';
+      toast('组已建好');
+      loadGroups();
+    } catch(e){ err.textContent = '建组失败：' + e.message + '（组名可能重复）'; }
+  }
+  let leaderGroup = null;
+  function openLeaderPicker(g){
+    leaderGroup = g;
+    document.getElementById('ldGroup').textContent = g.name;
+    const sel = document.getElementById('ldUser');
+    sel.innerHTML = '';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = '（未指定）';
+    sel.appendChild(none);
+    allUsers.filter(u => u.group === g.id && u.approved === true).forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = (u.name || '') + '（' + u.email + '）' + (u.level === '三级' ? '' : ' · ' + u.level);
+      sel.appendChild(o);
+    });
+    sel.value = g.leader || '';
+    document.getElementById('leaderModal').style.display = 'block';
+  }
+  function closeLeaderPicker(){
+    const m = document.getElementById('leaderModal');
+    if (m) m.style.display = 'none';
+    leaderGroup = null;
+  }
+  function saveLeaderPicker(){
+    if (leaderGroup) setGroupLeader(leaderGroup, document.getElementById('ldUser').value);
+  }
+  async function setGroupLeader(g, uid){
+    try {
+      if (uid){
+        const u = allUsers.find(x => x.id === uid);
+        if (u && u.level === '三级'){
+          if (!confirm('「' + (u.name || u.email) + '」现在是三级普通用户。设为组长需要同时升为二级管理员，继续？')){
+            await loadGroups(); renderOrgTree(); return;
+          }
+          await admApi('/api/collections/users/records/' + uid, {method: 'PATCH', body: JSON.stringify({level: '二级'})});
+        }
+      }
+      await admApi('/api/collections/groups/records/' + g.id, {method: 'PATCH', body: JSON.stringify({leader: uid || ''})});
+      const lu = uid ? (allUsers.find(x => x.id === uid) || {}) : null;
+      auditLog('指定组长', g.name, uid ? ('组长：' + (lu.name || lu.email || '')) : '清除组长');
+      toast(uid ? '组长已指定' : '组长已清除');
+      closeLeaderPicker();
+      await loadUsers();
+      await loadGroups();
+    } catch(e){ toast('设置失败：' + e.message); }
+  }
+  async function delGroup(g, n){
+    if (!confirm('删除组「' + g.name + '」？组里的 ' + n + ' 个人会变成未分组（人不会被删）。')) return;
+    try {
+      await admApi('/api/collections/groups/records/' + g.id, {method: 'DELETE'});
+      auditLog('删除组', g.name, '原成员 ' + n + ' 人');
+      toast('组已删除');
+      loadUsers().then(loadGroups);
+    } catch(e){ alert('删除失败：' + e.message); }
+  }
+
+  /* ---------- 用户 ---------- */
+  async function loadUsers(){
+    try {
+      if (!allGroups.length) {
+        try { const gr = await admApi('/api/collections/groups/records?perPage=100&sort=name'); allGroups = gr.items || []; } catch(e){}
+      }
+      const r = await admApi('/api/collections/users/records?perPage=200&sort=created');
+      allUsers = r.items || [];
+      renderOrgTree();
+      renderUserChecks(null);
+      loadGroups();
+    } catch(e){ toast(e.message); }
+  }
+  function levelBadge(u){
+    const lv = u.level || '三级';
+    const cls = lv === '一级' ? 'lv1' : (lv === '二级' ? 'lv2' : 'lv3');
+    return '<span class="lvb ' + cls + '">' + lv + '</span>';
+  }
+  function userNode(u, leaderId){
+    const b = document.createElement('button');
+    b.className = 'tnode';
+    b.type = 'button';
+    const nm = u.name || '（未填）';
+    b.innerHTML = '<span class="av"></span><span><b></b> ' + levelBadge(u) + (leaderId && u.id === leaderId ? ' <span class="lvb" style="background:#FEF3C7;color:#92400E">👑 组长</span>' : '') +
+      (u.approved !== true ? ' <span class="lvb" style="background:#FDECEA;color:#C0392B">待审核</span>' : '') +
+      '<br><span class="em"></span></span>';
+    b.querySelector('.av').textContent = (u.level === '二级' ? '⭐' : nm.slice(0, 1));
+    b.querySelector('b').textContent = nm;
+    b.querySelector('.em').textContent = u.email;
+    b.addEventListener('click', () => openUserEditor(u));
+    return b;
+  }
+  function renderOrgTree(){
+    const box = document.getElementById('orgTree');
+    if (!box) return;
+    box.innerHTML = '';
+    const rank = lv => ({'一级': 0, '二级': 1, '三级': 2}[lv || '三级']);
+    const byLevel = (a, b) => rank(a.level) - rank(b.level);
+    const pending = allUsers.filter(u => u.approved !== true).sort(byLevel);
+    if (pending.length) {
+      const sec = document.createElement('div');
+      sec.className = 'tree-sec';
+      sec.innerHTML = '<div class="tree-sec-h">⏳ 待审核（' + pending.length + '）· 点节点先定级别和分组，再通过审核</div>';
+      const loose = document.createElement('div');
+      loose.className = 'loose';
+      pending.forEach(u => loose.appendChild(userNode(u)));
+      sec.appendChild(loose);
+      box.appendChild(sec);
+    }
+    allGroups.forEach(g => {
+      const members = allUsers.filter(u => u.approved === true && u.group === g.id).sort((a, b) => (a.id === g.leader ? -1 : b.id === g.leader ? 1 : byLevel(a, b)));
+      const lead = members.find(u => u.id === g.leader);
+      const wrap = document.createElement('div');
+      wrap.className = 'tree-box';
+      const root = document.createElement('div');
+      root.className = 'tree-root';
+      root.innerHTML = '🏢 <span class="tname"></span><span class="tn"></span>';
+      root.querySelector('.tname').textContent = g.name;
+      root.querySelector('.tn').textContent = members.length + ' 人' + (lead ? ' · 组长 ' + (lead.name || lead.email) : ' · 未指定组长');
+      wrap.appendChild(root);
+      const lb = document.createElement('button');
+      lb.textContent = '指定组长';
+      lb.style.cssText = 'margin-left:10px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:7px;padding:3px 10px;font-size:12px;cursor:pointer';
+      lb.addEventListener('click', () => openLeaderPicker(g));
+      root.appendChild(lb);
+      const ul = document.createElement('ul');
+      ul.className = 'tree';
+      members.forEach(u => {
+        const li = document.createElement('li');
+        li.appendChild(userNode(u, g.leader));
+        ul.appendChild(li);
+      });
+      if (!members.length) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span style="color:#8A94A6;font-size:13px">暂无成员</span>';
+        ul.appendChild(li);
+      }
+      wrap.appendChild(ul);
+      box.appendChild(wrap);
+    });
+    const rest = allUsers.filter(u => u.approved === true && !u.group);
+    const sec2 = document.createElement('div');
+    sec2.className = 'tree-sec';
+    sec2.innerHTML = '<div class="tree-sec-h">👤 未分组（游散 ' + rest.length + ' 人）</div>';
+    const loose2 = document.createElement('div');
+    loose2.className = 'loose';
+    rest.slice().sort(byLevel).forEach(u => loose2.appendChild(userNode(u)));
+    if (!rest.length) loose2.innerHTML = '<span style="color:#8A94A6;font-size:13px">没有未分组的人</span>';
+    sec2.appendChild(loose2);
+    box.appendChild(sec2);
+    if (!allUsers.length) box.innerHTML = '<div style="color:#8A94A6">还没有用户。</div>';
+  }
+  /* ----- 点人编辑 ----- */
+  let editingUser = null;
+  function openUserEditor(u){
+    editingUser = u;
+    document.getElementById('ueName').value = u.name || '';
+    document.getElementById('ueEmail').textContent = u.email;
+    document.getElementById('ueMeta').textContent = '注册于 ' + (u.created || '').slice(0, 10) + (u.approved === true ? ' · 已审核' : ' · 待审核');
+    const lv = document.getElementById('ueLevel');
+    lv.value = u.level || '三级';
+    const gs = document.getElementById('ueGroup');
+    gs.innerHTML = '';
+    const none = document.createElement('option'); none.value = ''; none.textContent = '（不分组）';
+    gs.appendChild(none);
+    allGroups.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; gs.appendChild(o); });
+    gs.value = u.group || '';
+    document.getElementById('ueApprove').style.display = u.approved === true ? 'none' : '';
+    document.getElementById('ueErr').textContent = '';
+    document.getElementById('userEditor').style.display = 'block';
+  }
+  function closeUserEditor(){
+    document.getElementById('userEditor').style.display = 'none';
+    editingUser = null;
+  }
+  async function saveUserEditor(){
+    if (!editingUser) return;
+    const err = document.getElementById('ueErr');
+    err.textContent = '';
+    const name = document.getElementById('ueName').value.trim();
+    const level = document.getElementById('ueLevel').value;
+    const group = document.getElementById('ueGroup').value;
+    if (editingUser.email === 'admin@example.com' && level !== '一级') {
+      if (!confirm('这是主账号，确定要把级别改成「' + level + '」？')) return;
+    }
+    try {
+      await admApi('/api/collections/users/records/' + editingUser.id, {
+        method: 'PATCH', body: JSON.stringify({name, level, group})
+      });
+      auditLog('编辑用户', editingUser.email, (name || '') + ' · ' + level + (group ? ' · ' + groupName(group) : ' · 未分组'));
+      toast('已保存');
+      closeUserEditor();
+      loadUsers();
+    } catch(e){ err.textContent = '保存失败：' + e.message; }
+  }
+  async function setLevel(u, level){
+    if (u.email === 'admin@example.com' && level !== '一级') {
+      if (!confirm('这是主账号，确定要把级别改成「' + level + '」？')) { loadUsers(); return; }
+    }
+    try {
+      await admApi('/api/collections/users/records/' + u.id, {method: 'PATCH', body: JSON.stringify({level})});
+      auditLog('改级别', (u.name || u.email), '改为 ' + level);
+      u.level = level;
+      toast('级别已更新');
+    } catch(e){ alert('更新失败：' + e.message); loadUsers(); }
+  }
+  async function setGroup(u, group){
+    try {
+      await admApi('/api/collections/users/records/' + u.id, {method: 'PATCH', body: JSON.stringify({group})});
+      auditLog('改分组', (u.name || u.email), '分到 ' + (group ? groupName(group) : '（无组）'));
+      u.group = group;
+      toast('分组已更新');
+      loadGroups();
+    } catch(e){ alert('更新失败：' + e.message); loadUsers(); }
+  }
+  async function addUser(){
+    const name = document.getElementById('u_name').value.trim();
+    const email = document.getElementById('u_email').value.trim();
+    const pw = document.getElementById('u_pw').value;
+    const level = document.getElementById('u_level').value;
+    const group = document.getElementById('u_group').value;
+    const err = document.getElementById('userErr');
+    err.textContent = '';
+    if (!email || !pw){ err.textContent = '邮箱和初始密码必填'; return; }
+    if (pw.length < 8){ err.textContent = '密码至少 8 位'; return; }
+    const body = {name, email, password: pw, passwordConfirm: pw, emailVisibility: true, level, approved: true};
+    if (group) body.group = group;
+    try {
+      await admApi('/api/collections/users/records', {method: 'POST', body: JSON.stringify(body)});
+      auditLog('添加用户', email, (name || '') + ' · ' + level + (group ? ' · ' + groupName(group) : ''));
+      document.getElementById('u_name').value = '';
+      document.getElementById('u_email').value = '';
+      document.getElementById('u_pw').value = '';
+      toast('用户已添加');
+      loadUsers();
+    } catch(e){ err.textContent = '添加失败：' + e.message; }
+  }
+  async function resetPw(u){
+    const pw = prompt('给「' + (u.name || u.email) + '」设置新密码（至少 8 位）：');
+    if (!pw) return;
+    if (pw.length < 8){ alert('密码至少 8 位'); return; }
+    try {
+      await admApi('/api/collections/users/records/' + u.id, {
+        method: 'PATCH', body: JSON.stringify({password: pw, passwordConfirm: pw})
+      });
+      auditLog('重置密码', (u.name || u.email), '');
+      toast('密码已重置');
+    } catch(e){ alert('重置失败：' + e.message); }
+  }
+  async function delUser(u){
+    if (u.email === 'admin@example.com'){ alert('这是主账号，不能删。'); return; }
+    if (!confirm('确定删除用户「' + (u.name || u.email) + '」？删了就登录不了了。')) return;
+    try {
+      await admApi('/api/collections/users/records/' + u.id, {method: 'DELETE'});
+      auditLog('删除用户', (u.name || u.email), '');
+      toast('已删除');
+      loadUsers();
+    } catch(e){ alert('删除失败：' + e.message); }
+  }
+  async function approveUser(u){
+    try {
+      await admApi('/api/collections/users/records/' + u.id, {method: 'PATCH', body: JSON.stringify({approved: true})});
+      auditLog('审核通过', (u.name || u.email), '级别 ' + (u.level || '三级') + (u.group ? ' · ' + groupName(u.group) : ''));
+      toast('已通过审核');
+      loadUsers();
+    } catch(e){ alert('操作失败：' + e.message); }
+  }
+  function renderUserChecks(selectedIds){
+    const box = document.getElementById('userChecks');
+    if (!box) return;
+    box.innerHTML = '';
+    allUsers.forEach(u => {
+      const lab = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = u.id;
+      if (selectedIds && selectedIds.includes(u.id)) cb.checked = true;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode((u.name || '') + '（' + u.email + '）'));
+      box.appendChild(lab);
+    });
+    if (!allUsers.length) box.textContent = '暂无用户';
+  }
+
+  /* ---------- 页面 ---------- */
+  function myScopePages(){
+    if (isSuper()) return allPages;
+    const u = me();
+    if (!u) return [];
+    if (u.level === '一级') return allPages;
+    return allPages.filter(p => p.owner === u.id || (u.group && p.group === u.group));
+  }
+  /* ---------- 应用项目治理 ---------- */
+  let allProjects = [];
+  function scopeTxt(v, ids){
+    if (v === 'group') return '本组';
+    if (v === 'owner') return '仅负责人';
+    if (v === 'users'){ const n = (ids || '').split(',').filter(Boolean).length; return '指定 ' + n + ' 人'; }
+    return '所有人';
+  }
+  async function loadProjects(){
+    const tb = document.getElementById('projBody');
+    if (!tb) return;
+    try {
+      const r = await admApi("/api/collections/app_data/records?perPage=200&sort=-updated&expand=owner&filter=" + encodeURIComponent("(app='checklist' || app='ledger')"));
+      allProjects = r.items || [];
+      renderProjects();
+    } catch(e){ tb.innerHTML = '<tr><td colspan="8" style="color:#C0392B">加载失败</td></tr>'; }
+  }
+  function myScopeProjects(){
+    if (isSuper()) return allProjects;
+    const u = me();
+    if (!u) return [];
+    if (u.level === '一级') return allProjects;
+    return allProjects.filter(p => p.owner === u.id || (u.group && p.expand && p.expand.owner && p.expand.owner.group === u.group));
+  }
+  function renderProjects(){
+    const tb = document.getElementById('projBody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    const items = myScopeProjects();
+    items.forEach(p => {
+      const tr = document.createElement('tr');
+      const isCheck = p.app === 'checklist';
+      const ow = (p.expand && p.expand.owner) || {};
+      tr.innerHTML = '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>';
+      tr.children[0].textContent = isCheck ? '📋' : '📒';
+      tr.children[1].textContent = p.title || '（未命名）';
+      tr.children[2].textContent = isCheck ? '检查表应用' : '记账本';
+      tr.children[3].textContent = ow.name || ow.email || '—';
+      tr.children[4].textContent = scopeTxt(p.edit_scope, p.edit_user_ids);
+      tr.children[5].textContent = scopeTxt(p.read_scope, p.read_user_ids);
+      tr.children[6].textContent = (p.updated || '').slice(0, 10);
+      const eb2 = document.createElement('button'); eb2.className = 'btn ghost sm'; eb2.textContent = '编辑';
+      eb2.addEventListener('click', () => openProjEditor(p));
+      const db2 = document.createElement('button'); db2.className = 'btn danger sm'; db2.textContent = '删除';
+      db2.style.marginLeft = '6px';
+      db2.addEventListener('click', () => delProjectAdmin(p));
+      tr.children[7].appendChild(eb2); tr.children[7].appendChild(db2);
+      tb.appendChild(tr);
+    });
+    if (!items.length) tb.innerHTML = '<tr><td colspan="8" style="color:#8A94A6">还没有应用项目。</td></tr>';
+  }
+  let editingProj = null;
+  function peChecks(boxId, selected){
+    const box = document.getElementById(boxId);
+    box.innerHTML = '';
+    allUsers.forEach(u => {
+      const lab = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = u.id;
+      if (selected && selected.includes(u.id)) cb.checked = true;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode((u.name || '') + '（' + u.email + '）'));
+      box.appendChild(lab);
+    });
+  }
+  function peScopeToggle(){
+    document.getElementById('peRowEditUsers').style.display = document.getElementById('pe_edit').value === 'users' ? 'block' : 'none';
+    document.getElementById('peRowReadUsers').style.display = document.getElementById('pe_read').value === 'users' ? 'block' : 'none';
+  }
+  function openProjEditor(p){
+    editingProj = p;
+    document.getElementById('peAppName').textContent = (p.app === 'checklist' ? '检查表应用' : '记账本') + ' · ' + (p.title || '');
+    document.getElementById('pe_title').value = p.title || '';
+    const os = document.getElementById('pe_owner');
+    os.innerHTML = '';
+    allUsers.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = (u.name || '') + '（' + u.email + '）'; os.appendChild(o); });
+    if (p.owner && !allUsers.some(u => u.id === p.owner)) { const o = document.createElement('option'); o.value = p.owner; o.textContent = '（当前负责人）'; os.appendChild(o); }
+    os.value = p.owner || '';
+    document.getElementById('pe_edit').value = p.edit_scope || 'all';
+    document.getElementById('pe_read').value = p.read_scope || 'all';
+    peChecks('peEditChecks', (p.edit_user_ids || '').split(',').filter(Boolean));
+    peChecks('peReadChecks', (p.read_user_ids || '').split(',').filter(Boolean));
+    peScopeToggle();
+    document.getElementById('peErr').textContent = '';
+    const box = document.getElementById('projEditor');
+    box.style.display = 'block';
+    box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }
+  function closeProjEditor(){ document.getElementById('projEditor').style.display = 'none'; editingProj = null; }
+  function peCollect(boxId){ return Array.from(document.querySelectorAll('#' + boxId + ' input:checked')).map(cb => cb.value).join(','); }
+  async function saveProjEditor(){
+    if (!editingProj) return;
+    const err = document.getElementById('peErr');
+    err.textContent = '';
+    const body = {
+      title: document.getElementById('pe_title').value.trim(),
+      owner: document.getElementById('pe_owner').value,
+      edit_scope: document.getElementById('pe_edit').value,
+      read_scope: document.getElementById('pe_read').value,
+      edit_user_ids: '', read_user_ids: ''
+    };
+    if (!body.title){ err.textContent = '项目名不能为空'; return; }
+    if (body.edit_scope === 'users'){ body.edit_user_ids = peCollect('peEditChecks'); if (!body.edit_user_ids){ err.textContent = '能编辑的人至少选一个'; return; } }
+    if (body.read_scope === 'users'){ body.read_user_ids = peCollect('peReadChecks'); if (!body.read_user_ids){ err.textContent = '能看的人至少选一个'; return; } }
+    try {
+      await admApi('/api/collections/app_data/records/' + editingProj.id, {method: 'PATCH', body: JSON.stringify(body)});
+      if (editingProj.app === 'checklist'){
+        const kids = await admApi("/api/collections/app_data/records?perPage=500&filter=" + encodeURIComponent("(project='" + editingProj.id + "')"));
+        for (const k of (kids.items || [])){
+          await admApi('/api/collections/app_data/records/' + k.id, {method: 'PATCH', body: JSON.stringify({
+            edit_scope: body.edit_scope, read_scope: body.read_scope,
+            edit_user_ids: body.edit_user_ids, read_user_ids: body.read_user_ids})});
+        }
+      }
+      auditLog('治理应用项目', body.title, '编辑 ' + scopeTxt(body.edit_scope, body.edit_user_ids) + ' / 可读 ' + scopeTxt(body.read_scope, body.read_user_ids));
+      toast('项目已更新');
+      closeProjEditor();
+      loadProjects();
+    } catch(e){ err.textContent = '保存失败：' + e.message; }
+  }
+  async function delProjectAdmin(p){
+    const isCheck = p.app === 'checklist';
+    if (!confirm('删除项目「' + (p.title || '') + '」？' + (isCheck ? '里面的检查项和附件会一并删除。' : '里面的账目会一并删除。') + '删除前系统会自动留历史快照。')) return;
+    try {
+      if (isCheck){
+        const kids = await admApi("/api/collections/app_data/records?perPage=500&filter=" + encodeURIComponent("(project='" + p.id + "')"));
+        for (const k of (kids.items || [])) await admApi('/api/collections/app_data/records/' + k.id, {method: 'DELETE'});
+        const files = await admApi("/api/collections/app_files/records?perPage=500&filter=" + encodeURIComponent("(project='" + p.id + "')"));
+        for (const f of (files.items || [])) await admApi('/api/collections/app_files/records/' + f.id, {method: 'DELETE'});
+      } else {
+        const recs = await admApi("/api/collections/jizhang_records/records?perPage=500&filter=" + encodeURIComponent("(project='" + p.id + "')"));
+        for (const r2 of (recs.items || [])) await admApi('/api/collections/jizhang_records/records/' + r2.id, {method: 'DELETE'});
+      }
+      await admApi('/api/collections/app_data/records/' + p.id, {method: 'DELETE'});
+      auditLog('删除应用项目', p.title || '', isCheck ? '检查表应用' : '记账本');
+      toast('项目已删除');
+      loadProjects();
+    } catch(e){ toast('删除失败：' + e.message); }
+  }
+
+  async function loadPages(){
+    try {
+      const r = await admApi('/api/collections/pages/records?perPage=200&sort=sort&expand=owner,template');
+      allPages = r.items || [];
+      renderPages();
+    } catch(e){ toast(e.message); }
+  }
+  function setPagesView(v){
+    pagesView = v;
+    document.getElementById('vtLive').className = v === 'live' ? 'on' : '';
+    document.getElementById('vtTrash').className = v === 'trash' ? 'on' : '';
+    closeEditor();
+    renderPages();
+  }
+  function buildPgTplFilter(){
+    const sel = document.getElementById('pgTplFilter');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">全部模板</option><option value="__none">（无模板）</option>';
+    TPL_LIB.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = (t.icon || '🧩') + ' ' + (t.name || '');
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  }
+  function renderPages(){
+    const scoped = myScopePages();
+    const tf = (document.getElementById('pgTplFilter') || {}).value || '';
+    const items = scoped.filter(p => (pagesView === 'trash' ? p.trashed === true : p.trashed !== true))
+      .filter(p => !tf || (tf === '__none' ? !p.template : p.template === tf));
+    document.getElementById('pagesCount').textContent = pagesView === 'trash'
+      ? ('回收站里 ' + items.length + ' 个页面')
+      : ('共 ' + items.length + ' 个页面');
+    const tb = document.getElementById('pagesBody');
+    tb.innerHTML = '';
+    items.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td style="font-size:20px"></td><td></td><td style="color:#8A94A6"></td>' +
+        '<td></td><td></td><td></td><td></td><td></td><td></td>';
+      tr.children[0].textContent = p.icon || '📄';
+      tr.children[1].textContent = p.title;
+      tr.children[2].textContent = p.slug;
+      tr.children[3].innerHTML = p.kind === 'link' ? '<span class="tag">链接</span>' : '<span class="tag">HTML</span>';
+      const ow = p.expand && p.expand.owner;
+      tr.children[4].textContent = ow ? (ow.name || ow.email || '') : '—';
+      const tp = p.expand && p.expand.template;
+      tr.children[5].textContent = tp ? (tp.name || '') : '—';
+      tr.children[6].textContent = p.visibility === 'users' ? '指定的人' : (p.visibility === 'group' ? '组：' + groupName(p.group) : '所有人');
+      tr.children[7].innerHTML = p.trashed ? '<span class="tag off">回收站</span>' : (p.active === false ? '<span class="tag off">未发布</span>' : '<span class="tag">已发布</span>');
+      const cell = tr.children[8];
+      if (pagesView === 'trash') {
+        const b1 = document.createElement('button'); b1.className = 'btn ghost sm'; b1.textContent = '恢复';
+        b1.addEventListener('click', () => restorePage(p));
+        const b2 = document.createElement('button'); b2.className = 'btn danger sm'; b2.textContent = '彻底删除';
+        b2.addEventListener('click', () => purgePage(p));
+        cell.appendChild(b1); cell.appendChild(document.createTextNode(' ')); cell.appendChild(b2);
+      } else {
+        const b1 = document.createElement('button'); b1.className = 'btn ghost sm'; b1.textContent = '编辑';
+        b1.addEventListener('click', () => openEditor(p));
+        const b2 = document.createElement('button'); b2.className = 'btn danger sm'; b2.textContent = '删除';
+        b2.addEventListener('click', () => trashPage(p));
+        cell.appendChild(b1); cell.appendChild(document.createTextNode(' ')); cell.appendChild(b2);
+      }
+      tb.appendChild(tr);
+    });
+    if (!items.length) tb.innerHTML = '<tr><td colspan="9" style="color:#8A94A6">' +
+      (pagesView === 'trash' ? '回收站是空的。' : '还没有符合条件的门户。新建门户请到平台首页从模板新建。') + '</td></tr>';
+  }
+  function kindToggle(){
+    const k = document.getElementById('f_kind').value;
+    document.getElementById('row_url').style.display = k === 'link' ? 'block' : 'none';
+    document.getElementById('row_html').style.display = k === 'html' ? 'block' : 'none';
+  }
+  function visToggle(){
+    const v = document.getElementById('f_visibility').value;
+    document.getElementById('row_users').style.display = v === 'users' ? 'block' : 'none';
+    document.getElementById('row_group').style.display = v === 'group' ? 'block' : 'none';
+  }
+  let TPL_LIB = [];
+  let editingTplId = null;
+  function builtinTpls(){
+    return [
+      {id: 'b-notice', tkey: 'notice', name: '公告页', kind: 'html', icon: '📢', desc: '发通知、贴告示', html: TEMPLATES.notice, sort: 10},
+      {id: 'b-article', tkey: 'article', name: '图文页', kind: 'html', icon: '🖼️', desc: '标题 + 图 + 几段文字', html: TEMPLATES.article, sort: 20},
+      {id: 'b-links', tkey: 'links', name: '链接页', kind: 'html', icon: '🔗', desc: '一排常用链接按钮', html: TEMPLATES.links, sort: 30},
+      {id: 'b-records', tkey: 'records', name: '通用记录页', kind: 'html', icon: '🧾', desc: '能填、能存、能删、能导出（数据自动存）', html: TEMPLATES.records, sort: 40},
+      {id: 'b-app-checklist', tkey: 'app-checklist', name: '检查表应用', kind: 'app', icon: '📋', desc: '应用：套用保存即挂载，项目在应用里建', url: '/checklist.html', slug_hint: 'checklist', sort: 50},
+      {id: 'b-app-ledger', tkey: 'app-ledger', name: '记账本', kind: 'app', icon: '📒', desc: '应用：多人记账本，记账本在应用里建', url: '/jizhang.html', slug_hint: 'jizhang', sort: 60}
+    ];
+  }
+  async function seedBuiltinTpls(){
+    for (const t of builtinTpls()){
+      const body = Object.assign({}, t); delete body.id;
+      try { await admApi('/api/collections/templates/records', {method: 'POST', body: JSON.stringify(body)}); } catch(e){}
+    }
+  }
+  async function loadTemplateLib(){
+    try {
+      const r = await admApi('/api/collections/templates/records?perPage=100&sort=sort,created');
+      TPL_LIB = r.items || [];
+      if (!TPL_LIB.length && (isSuper() || (me() && me().level === '一级'))){
+        await seedBuiltinTpls();
+        const r2 = await admApi('/api/collections/templates/records?perPage=100&sort=sort,created');
+        TPL_LIB = r2.items || [];
+      }
+    } catch(e){ TPL_LIB = []; }
+    if (!TPL_LIB.length) TPL_LIB = builtinTpls();
+    buildPgTplFilter();
+  }
+  /* ===== 模板管理（只读清单；模板由维护者部署时登记维护） ===== */
+  async function loadTemplatesAdmin(){
+    await loadTemplateLib();
+    renderTpls();
+  }
+  function renderTpls(){
+    const tb = document.getElementById('tplsBody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    TPL_LIB.forEach(t => {
+      const tr = document.createElement('tr');
+      const c0 = document.createElement('td'); c0.textContent = t.icon || '🧩'; tr.appendChild(c0);
+      const c1 = document.createElement('td'); c1.textContent = t.name || ''; tr.appendChild(c1);
+      const c2 = document.createElement('td'); c2.textContent = t.kind === 'app' ? '应用模板' : '内容模板'; tr.appendChild(c2);
+      const c3 = document.createElement('td'); c3.textContent = t.desc || ''; tr.appendChild(c3);
+      const c4 = document.createElement('td');
+      if (t.visibility === 'users') c4.textContent = '指定的人';
+      else if (t.visibility === 'group') {
+        const gids = ((t.visible_group_ids || '') + ',' + (t.group || '')).split(',').map(x => x.trim()).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+        c4.textContent = '组：' + gids.map(gid => groupName(gid)).join('、');
+      } else c4.textContent = '所有人';
+      tr.appendChild(c4);
+      const c5 = document.createElement('td'); c5.textContent = (t.updated || t.created || '').slice(0, 10); tr.appendChild(c5);
+      const c6 = document.createElement('td');
+      const sb = document.createElement('button'); sb.className = 'btn ghost sm'; sb.textContent = '谁能用';
+      sb.addEventListener('click', () => openTplScope(t.id));
+      c6.appendChild(sb);
+      tr.appendChild(c6);
+      tb.appendChild(tr);
+    });
+    if (!TPL_LIB.length) tb.innerHTML = '<tr><td colspan="7" style="color:#8A94A6">模板库是空的。模板由维护者在部署时登记。</td></tr>';
+  }
+  let scopeTplId = null;
+  function tsVisToggle(){
+    const v = document.getElementById('tsVis').value;
+    document.getElementById('tsRowGroup').style.display = v === 'group' ? 'block' : 'none';
+    document.getElementById('tsRowUsers').style.display = v === 'users' ? 'block' : 'none';
+  }
+  function renderScopeGroupChecks(selectedIds){
+    const box = document.getElementById('tsGroupChecks');
+    if (!box) return;
+    box.innerHTML = '';
+    allGroups.forEach(g => {
+      const lab = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = g.id;
+      if (selectedIds && selectedIds.includes(g.id)) cb.checked = true;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(g.name));
+      box.appendChild(lab);
+    });
+    if (!allGroups.length) box.textContent = '暂无分组';
+  }
+  function renderScopeUserChecks(selectedIds){
+    const box = document.getElementById('tsUserChecks');
+    if (!box) return;
+    box.innerHTML = '';
+    allUsers.forEach(u => {
+      const lab = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = u.id;
+      if (selectedIds && selectedIds.includes(u.id)) cb.checked = true;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode((u.name || '') + '（' + u.email + '）'));
+      box.appendChild(lab);
+    });
+    if (!allUsers.length) box.textContent = '暂无用户';
+  }
+  function openTplScope(id){
+    const t = TPL_LIB.find(x => x.id === id);
+    if (!t) return;
+    scopeTplId = id;
+    document.getElementById('tsName').textContent = '设置「' + (t.name || '') + '」谁能用';
+    document.getElementById('tsErr').textContent = '';
+    document.getElementById('tsVis').value = t.visibility || 'all';
+    renderScopeGroupChecks(((t.visible_group_ids || '') + ',' + (t.group || '')).split(',').map(x => x.trim()).filter(Boolean));
+    renderScopeUserChecks((t.visible_user_ids || '').split(',').map(x => x.trim()).filter(Boolean));
+    tsVisToggle();
+    const box = document.getElementById('tplScopeBox');
+    box.style.display = 'block';
+    box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }
+  function closeTplScope(){
+    document.getElementById('tplScopeBox').style.display = 'none';
+    scopeTplId = null;
+  }
+  async function saveTplScope(){
+    if (!scopeTplId) return;
+    const err = document.getElementById('tsErr');
+    err.textContent = '';
+    const vis = document.getElementById('tsVis').value;
+    const body = {visibility: vis, visible_user_ids: '', visible_group_ids: '', group: ''};
+    if (vis === 'group'){
+      body.visible_group_ids = Array.from(document.querySelectorAll('#tsGroupChecks input:checked')).map(cb => cb.value).join(',');
+      if (!body.visible_group_ids){ err.textContent = '至少选一个组'; return; }
+      body.group = body.visible_group_ids.split(',')[0];
+    } else if (vis === 'users'){
+      body.visible_user_ids = Array.from(document.querySelectorAll('#tsUserChecks input:checked')).map(cb => cb.value).join(',');
+      if (!body.visible_user_ids){ err.textContent = '至少选一个人'; return; }
+    }
+    const t = TPL_LIB.find(x => x.id === scopeTplId);
+    try {
+      await admApi('/api/collections/templates/records/' + scopeTplId, {method: 'PATCH', body: JSON.stringify(body)});
+      auditLog('设置模板使用范围', t ? t.name : '', vis === 'group' ? '组：' + body.visible_group_ids.split(',').map(gid => groupName(gid)).join('、') : (vis === 'users' ? '指定的人' : '所有人'));
+      toast('使用范围已更新');
+      closeTplScope();
+      await loadTemplateLib();
+      renderTpls();
+    } catch(e){ err.textContent = '保存失败：' + e.message; }
+  }
+  function openEditor(p){
+    editingId = p ? p.id : null;
+    document.getElementById('editorTitle').textContent = p ? '编辑门户' : '新建门户';
+    document.getElementById('editorErr').textContent = '';
+    document.getElementById('f_title').value = p ? (p.title || '') : '';
+    document.getElementById('f_slug').value = p ? (p.slug || '') : '';
+    document.getElementById('f_icon').value = p ? (p.icon || '') : '';
+    document.getElementById('f_sort').value = p ? (p.sort || 10) : 10;
+    document.getElementById('f_kind').value = p ? (p.kind || 'html') : 'html';
+    document.getElementById('f_url').value = p ? (p.url || '') : '';
+    document.getElementById('f_html').value = p ? (p.html || '') : '';
+    document.getElementById('f_visibility').value = p ? (p.visibility || 'all') : 'all';
+    document.getElementById('f_active').checked = p ? (p.active !== false) : true;
+    document.getElementById('f_appmode').checked = !!(p && p.app_mode);
+    const iAmL2 = !isSuper() && me() && me().level === '二级';
+    const osel = document.getElementById('f_owner');
+    osel.innerHTML = '';
+    allUsers.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = (u.name || '') + '（' + u.email + '）';
+      osel.appendChild(o);
+    });
+    if (p && p.owner && !Array.from(osel.options).some(o => o.value === p.owner)) {
+      const ox = document.createElement('option');
+      ox.value = p.owner; ox.textContent = '（当前负责人）';
+      osel.appendChild(ox);
+    }
+    if (p && p.owner) osel.value = p.owner;
+    osel.disabled = iAmL2;
+    document.getElementById('row_appmode').style.display = iAmL2 ? 'none' : '';
+    document.querySelectorAll('#f_visibility option').forEach(o => { o.disabled = !!iAmL2 && o.value !== 'group'; });
+    if (iAmL2 && !p) document.getElementById('f_visibility').value = 'group';
+    fillGroupSelects();
+    if (p && p.group) document.getElementById('f_group').value = p.group;
+    const ids = p ? (p.visible_user_ids || '').split(',').map(s => s.trim()).filter(Boolean) : [];
+    renderUserChecks(ids);
+    kindToggle(); visToggle();
+    document.getElementById('editor').style.display = 'block';
+    document.getElementById('editor').scrollIntoView({behavior: 'smooth'});
+  }
+  function closeEditor(){ document.getElementById('editor').style.display = 'none'; editingId = null; }
+  async function savePage(){
+    const err = document.getElementById('editorErr');
+    err.textContent = '';
+    const title = document.getElementById('f_title').value.trim();
+    const slug = document.getElementById('f_slug').value.trim();
+    if (!title || !slug){ err.textContent = '标题和标识必填'; return; }
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)){ err.textContent = '标识只能用小写英文、数字和短横线'; return; }
+    const vis = document.getElementById('f_visibility').value;
+    const checked = Array.from(document.querySelectorAll('#userChecks input:checked')).map(cb => cb.value);
+    const body = {
+      title, slug,
+      icon: document.getElementById('f_icon').value.trim(),
+      kind: document.getElementById('f_kind').value,
+      url: document.getElementById('f_url').value.trim(),
+      html: document.getElementById('f_html').value,
+      visibility: vis,
+      visible_user_ids: checked.join(','),
+      group: vis === 'group' ? document.getElementById('f_group').value : '',
+      sort: parseInt(document.getElementById('f_sort').value || '10', 10),
+      active: document.getElementById('f_active').checked,
+      app_mode: document.getElementById('f_appmode').checked && (isSuper() || (me() && me().level === '一级'))
+    };
+    const ownerSelVal = document.getElementById('f_owner').value;
+    if (ownerSelVal) body.owner = ownerSelVal;
+    try {
+      if (editingId) {
+        await admApi('/api/collections/pages/records/' + editingId, {method: 'PATCH', body: JSON.stringify(body)});
+        auditLog('编辑页面', title, '标识 ' + slug);
+      } else {
+        await admApi('/api/collections/pages/records', {method: 'POST', body: JSON.stringify(body)});
+        auditLog('新建页面', title, '标识 ' + slug);
+      }
+      toast('页面已保存');
+      closeEditor();
+      loadPages();
+    } catch(e){ err.textContent = '保存失败：' + e.message + '（标识可能跟已有页面重复）'; }
+  }
+  async function trashPage(p){
+    if (!confirm('把页面「' + p.title + '」移入回收站？门户上立刻不见，之后能恢复。')) return;
+    try {
+      await admApi('/api/collections/pages/records/' + p.id, {method: 'PATCH', body: JSON.stringify({trashed: true})});
+      auditLog('页面移入回收站', p.title, '标识 ' + p.slug);
+      toast('已移入回收站');
+      loadPages();
+    } catch(e){ alert('操作失败：' + e.message); }
+  }
+  async function restorePage(p){
+    try {
+      await admApi('/api/collections/pages/records/' + p.id, {method: 'PATCH', body: JSON.stringify({trashed: false})});
+      auditLog('恢复页面', p.title, '标识 ' + p.slug);
+      toast('已恢复');
+      loadPages();
+    } catch(e){ alert('恢复失败：' + e.message); }
+  }
+  async function purgePage(p){
+    if (!confirm('彻底删除页面「' + p.title + '」？这回真没了。')) return;
+    try {
+      await admApi('/api/collections/pages/records/' + p.id, {method: 'DELETE'});
+      auditLog('彻底删除页面', p.title, '标识 ' + p.slug);
+      toast('已彻底删除');
+      loadPages();
+    } catch(e){ alert('删除失败：' + e.message); }
+  }
+
+  /* ---------- 操作日志 ---------- */
+  async function loadLogs(){
+    try {
+      const r = await admApi('/api/collections/audit_logs/records?perPage=100&sort=-created');
+      const items = r.items || [];
+      document.getElementById('logsCount').textContent = '共 ' + items.length + ' 条';
+      const tb = document.getElementById('logsBody');
+      tb.innerHTML = '';
+      items.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td style="color:#8A94A6;white-space:nowrap"></td><td></td><td></td><td></td><td style="color:#5B6573"></td>';
+        tr.children[0].textContent = (l.created || '').replace('T', ' ').slice(0, 16);
+        tr.children[1].textContent = l.actor || '';
+        tr.children[2].textContent = l.action || '';
+        tr.children[3].textContent = l.target || '';
+        tr.children[4].textContent = l.detail || '';
+        tb.appendChild(tr);
+      });
+      if (!items.length) tb.innerHTML = '<tr><td colspan="5" style="color:#8A94A6">还没有日志。做一次建页、加人等操作后，这里就会有记录。</td></tr>';
+    } catch(e){ toast(e.message); }
+  }
+
+  /* ---------- 设置 ---------- */
+  async function loadSettings(){
+    try {
+      const r = await admApi('/api/collections/settings/records?perPage=50');
+      settingsMap = {};
+      (r.items || []).forEach(x => settingsMap[x.key] = x);
+      if (settingsMap.site_title) document.getElementById('s_title').value = settingsMap.site_title.value || '';
+    } catch(e){ toast(e.message); }
+  }
+  async function saveSettings(){
+    const err = document.getElementById('setErr');
+    err.textContent = '';
+    try {
+      const v = document.getElementById('s_title').value.trim();
+      if (settingsMap.site_title) await admApi('/api/collections/settings/records/' + settingsMap.site_title.id, {method: 'PATCH', body: JSON.stringify({value: v})});
+      else await admApi('/api/collections/settings/records', {method: 'POST', body: JSON.stringify({key: 'site_title', value: v})});
+      auditLog('改站点名', v, '');
+      toast('设置已保存');
+      loadSettings();
+    } catch(e){ err.textContent = '保存失败：' + e.message; }
+  }
+
+  if (admToken()) enterShell();
+</script>
+</body>
+</html>

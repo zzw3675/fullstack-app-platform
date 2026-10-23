@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>记账本</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937}
+  .bar{background:#0A2540;border-bottom:3px solid #22C3D6;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bar a{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:8px}
+  .bar .t{font-size:18px;font-weight:700}
+  .bar .sp{flex:1}
+  .bar .who{font-size:13px;opacity:.9}
+  main{max-width:860px;margin:0 auto;padding:20px 16px 44px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:#fff;border-radius:10px;padding:16px;border:1px solid #E1E9F2;}
+  .stat .k{font-size:13px;color:#8A94A6}
+  .stat .v{font-size:22px;font-weight:700;margin-top:4px}
+  .stat .v.in{color:#1E9E62}.stat .v.out{color:#C0392B}
+  .panel{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:18px;margin-bottom:16px}
+  .panel h2{margin:0 0 12px;font-size:16px;color:#0A2540}
+  .frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  label{display:block;font-size:13px;color:#5B6573;margin:0 0 6px}
+  input,select{width:100%;height:40px;border:1px solid #D8E1EC;border-radius:8px;padding:0 10px;font-size:14px;background:#fff}
+  input:focus,select:focus{border-color:#2563EB;outline:none}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;height:40px;border-radius:8px;border:1px solid #C3D2E2;background:#fff;font-size:14px;cursor:pointer}
+  .seg button.on-out{background:#C0392B;border-color:#C0392B;color:#fff;font-weight:600}
+  .seg button.on-in{background:#1E9E62;border-color:#1E9E62;color:#fff;font-weight:600}
+  .btn{height:42px;padding:0 18px;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%}
+  .btn:hover{background:#14365E}
+  .btn.ghost{background:#fff;color:#0A2540;border:1px solid #C3D2E2;font-weight:500}
+  .btn.sm{height:34px;width:auto;padding:0 14px;font-size:13px}
+  .btn.danger{background:#fff;color:#C0392B;border:1px solid #E5B4AE;font-weight:500}
+  .err{color:#C0392B;font-size:13px;min-height:18px;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:#5B6573;font-weight:600;font-size:13px;padding:8px 8px;border-bottom:2px solid #E1E9F2}
+  td{padding:9px 8px;border-bottom:1px solid #EDF1F6;vertical-align:middle}
+  .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:#EAF1FE;color:#2563EB}
+  .amt-out{color:#C0392B;font-weight:600}
+  .amt-in{color:#1E9E62;font-weight:600}
+  .del{border:1px solid #E5B4AE;background:#fff;color:#C0392B;border-radius:6px;height:28px;padding:0 10px;font-size:12px;cursor:pointer}
+  .rst{border:1px solid #BFE3CF;background:#fff;color:#1E9E62;border-radius:6px;height:28px;padding:0 10px;font-size:12px;cursor:pointer;margin-right:6px}
+  .bar2{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .bar2 h2{margin:0}
+  .bar2 .sp{flex:1}
+  .cats{font-size:13px;color:#5B6573;line-height:2}
+  .cats b{color:#1F2937}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .lcard{background:#fff;border:1px solid #E1E9F2;border-radius:10px;padding:16px}
+  .lcard .ic{font-size:26px}
+  .lcard .nm{font-weight:700;color:#0A2540;margin:6px 0 4px;font-size:16px}
+  .lcard .meta{font-size:12px;color:#8A94A6;line-height:1.7;min-height:40px}
+  .lcard .ops{margin-top:10px;display:flex;gap:8px}
+  .lcard .ops a{flex:1;text-align:center;text-decoration:none;line-height:34px}
+  @media (max-width:640px){ .stats{grid-template-columns:1fr 1fr 1fr} .stat .v{font-size:17px} }
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="bar">
+  <a href="/">← 返回门户</a>
+  <a href="/history.html?src=jizhang">🕘 历史版本</a>
+  <a href="/jizhang.html" id="switchLink" style="display:none">↔ 切换记账本</a>
+  <div class="t" id="barTitle">📒 记账本</div>
+  <div class="sp"></div>
+  <div class="who" id="who"></div>
+</div>
+<main>
+  <!-- 选择 / 新建记账本 -->
+  <div id="picker" style="display:none">
+    <div class="panel">
+      <h2>新建记账本</h2>
+      <div class="frow">
+        <div><label>记账本名字</label><input type="text" id="np_name" placeholder="如：项目组开支"></div>
+        <div><label>谁能编辑</label>
+          <select id="np_edit">
+            <option value="all" selected>全员可编辑</option>
+            <option value="group">本组可编辑</option>
+            <option value="owner">仅负责人</option>
+            <option value="users">指定的人</option>
+          </select>
+        </div>
+        <div><label>谁能看</label>
+          <select id="np_read">
+            <option value="all" selected>全员可读</option>
+            <option value="group">仅本组可读</option>
+            <option value="owner">仅负责人</option>
+            <option value="users">指定的人</option>
+          </select>
+        </div>
+        <div><label>&nbsp;</label><button class="btn" id="npBtn">＋ 建记账本</button></div>
+      </div>
+      <div id="npEditUsers" style="display:none;margin-top:10px"></div>
+      <div id="npReadUsers" style="display:none;margin-top:10px"></div>
+      <div class="err" id="npErr"></div>
+    </div>
+    <div class="panel">
+      <h2>我能用的记账本</h2>
+      <div class="err" id="pkErr"></div>
+      <div class="cards" id="ledList"><div style="color:#8A94A6">加载中…</div></div>
+    </div>
+  </div>
+
+  <!-- 某个记账本里面 -->
+  <div id="book" style="display:none">
+  <div class="stats">
+    <div class="stat"><div class="k">本月收入</div><div class="v in" id="stIn">¥0</div></div>
+    <div class="stat"><div class="k">本月支出</div><div class="v out" id="stOut">¥0</div></div>
+    <div class="stat"><div class="k">本月结余</div><div class="v" id="stBal">¥0</div></div>
+  </div>
+
+  <div class="panel" id="roNote" style="display:none;color:#5B6573;font-size:14px">这个记账本对你只读：能看、能导出，不能记账或删除。</div>
+
+  <div class="panel" id="addPanel">
+    <h2>记一笔</h2>
+    <div class="frow">
+      <div><label>日期</label><input type="date" id="f_d"></div>
+      <div><label>类型</label>
+        <div class="seg">
+          <button type="button" id="segOut" class="on-out">支出</button>
+          <button type="button" id="segIn">收入</button>
+        </div>
+      </div>
+      <div><label>分类</label>
+        <select id="f_cat">
+          <option>餐饮</option><option>交通</option><option>购物</option><option>居家</option>
+          <option>医疗</option><option>教育</option><option>娱乐</option><option>工资</option><option>其他</option>
+        </select>
+      </div>
+      <div><label>金额（元）</label><input type="number" id="f_amt" step="0.01" min="0" placeholder="0.00"></div>
+      <div><label>备注</label><input type="text" id="f_note" placeholder="买了什么 / 什么钱"></div>
+      <div><label>&nbsp;</label><button class="btn" id="addBtn">记上</button></div>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="panel">
+    <h2>本月支出分类</h2>
+    <div class="cats" id="catBox">暂无</div>
+  </div>
+
+  <div class="panel">
+    <div class="bar2">
+      <h2>最近记录</h2>
+      <div class="sp"></div>
+      <button class="btn ghost sm" id="expBtn">导出 CSV</button>
+      <button class="btn ghost sm" id="trashBtn">🗑️ 回收站</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>日期</th><th>分类</th><th>备注</th><th>记账人</th><th style="text-align:right">金额</th><th></th></tr></thead>
+      <tbody id="tbody"><tr><td colspan="6" style="color:#8A94A6">加载中…</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="panel" id="trashPanel" style="display:none">
+    <h2>🗑️ 回收站（记账）</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>日期</th><th>分类</th><th>备注</th><th>记账人</th><th style="text-align:right">金额</th><th></th></tr></thead>
+      <tbody id="ttbody"><tr><td colspan="6" style="color:#8A94A6">空的</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+  </div>
+</main>
+<script src="/assets/auth.js"></script>
+<script>
+  let kind = '支出';
+  let records = [];
+  let trashRecords = [];
+  let PID = new URLSearchParams(location.search).get('project') || '';
+  let PROJ = null;
+  let canEdit = false;
+  const AD = '/api/collections/app_data/records';
+  const JR = '/api/collections/jizhang_records/records';
+  if (pbRequireAuth()) init();
+
+  function fmt(n){ return '¥' + Number(n || 0).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function monthPrefix(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function escQ(s){ return String(s || '').replace(/'/g, "\\'"); }
+  async function logAct(action, detail){
+    try {
+      const u = pbUser();
+      await pbApi('/api/collections/audit_logs/records', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({actor: (u && (u.name || u.email)) || '', action, target: '记账本' + (PROJ ? '·' + PROJ.title : ''), detail})
+      });
+    } catch(e){}
+  }
+  function editText(v){ return v === 'all' ? '全员可编辑' : (v === 'group' ? '本组可编辑' : (v === 'users' ? '指定人可编辑' : '仅负责人编辑')); }
+  function readText(v){ return v === 'group' ? '仅本组可读' : (v === 'owner' ? '仅负责人' : (v === 'users' ? '指定人可读' : '全员可读')); }
+
+  document.getElementById('segOut').addEventListener('click', () => setKind('支出'));
+  document.getElementById('segIn').addEventListener('click', () => setKind('收入'));
+  document.getElementById('addBtn').addEventListener('click', addRecord);
+  document.getElementById('expBtn').addEventListener('click', expCsv);
+  document.getElementById('trashBtn').addEventListener('click', () => {
+    const p = document.getElementById('trashPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('npBtn').addEventListener('click', createLedger);
+  function setKind(k){
+    kind = k;
+    document.getElementById('segOut').className = k === '支出' ? 'on-out' : '';
+    document.getElementById('segIn').className = k === '收入' ? 'on-in' : '';
+  }
+
+  async function init(){
+    const u = pbUser();
+    document.getElementById('who').textContent = (u && (u.name || u.email)) || '';
+    if (PID) await loadProject();
+    else await loadPicker();
+  }
+
+  /* ===== 记账本选择 / 新建 ===== */
+  async function loadPicker(){
+    document.getElementById('picker').style.display = 'block';
+    document.getElementById('book').style.display = 'none';
+    const box = document.getElementById('ledList');
+    try {
+      const r = await pbApi(AD + '?perPage=100&sort=-updated&expand=owner&filter=' + encodeURIComponent("(app='ledger')"));
+      const items = r.items || [];
+      box.innerHTML = '';
+      items.forEach(l => {
+        const card = document.createElement('div');
+        card.className = 'lcard';
+        const ow = (l.expand && l.expand.owner) || {};
+        card.innerHTML = '<div class="ic">📒</div><div class="nm"></div><div class="meta"></div><div class="ops"></div>';
+        card.querySelector('.nm').textContent = l.title || '（未命名）';
+        card.querySelector('.meta').textContent =
+          '负责人 ' + (ow.name || ow.email || '—') + ' · ' + editText(l.edit_scope) + ' · ' + readText(l.read_scope) +
+          ' · 更新于 ' + String(l.updated || '').slice(0, 10);
+        const ops = card.querySelector('.ops');
+        const open = document.createElement('a');
+        open.className = 'btn sm';
+        open.textContent = '打开记账';
+        open.href = '/jizhang.html?project=' + l.id;
+        ops.appendChild(open);
+        const me = pbUser() || {};
+        if (l.owner === me.id || me.level === '一级') {
+          const del = document.createElement('button');
+          del.className = 'btn danger sm';
+          del.textContent = '删除';
+          del.addEventListener('click', () => deleteLedger(l));
+          ops.appendChild(del);
+        }
+        box.appendChild(card);
+      });
+      if (!items.length) box.innerHTML = '<div style="color:#8A94A6">还没有记账本，用上面建第一个。</div>';
+    } catch(e){
+      box.innerHTML = '<div style="color:#C0392B">记账本列表加载失败，刷新再试</div>';
+    }
+  }
+  async function createLedger(){
+    const err = document.getElementById('npErr');
+    err.textContent = '';
+    const name = document.getElementById('np_name').value.trim();
+    if (!name){ err.textContent = '先给记账本起个名字'; return; }
+    if (document.getElementById('np_edit').value === 'users' && !npCollect('npEditUsers')){ err.textContent = '选了“指定的人”要至少勾一个人（能编辑）'; return; }
+    if (document.getElementById('np_read').value === 'users' && !npCollect('npReadUsers')){ err.textContent = '选了“指定的人”要至少勾一个人（能看）'; return; }
+    const u = pbUser();
+    try {
+      const rec = await pbApi(AD, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          app: 'ledger', title: name, content: '{}',
+          who: (u && (u.name || u.email)) || '', owner: u ? u.id : '',
+          edit_scope: document.getElementById('np_edit').value,
+          read_scope: document.getElementById('np_read').value,
+          edit_user_ids: npCollect('npEditUsers'),
+          read_user_ids: npCollect('npReadUsers')
+        })
+      });
+      logAct('新建记账本', name);
+      location.href = '/jizhang.html?project=' + rec.id;
+    } catch(e){ err.textContent = '没建上，再试一次'; }
+  }
+  let npUsersCache = null;
+  async function npFillUsers(box){
+    if (!npUsersCache){
+      try { const r = await pbApi('/api/collections/users/records?perPage=200&sort=name'); npUsersCache = r.items || []; }
+      catch(e){ npUsersCache = []; }
+    }
+    box.innerHTML = '<div style="font-size:12.5px;color:#5B6573;margin-bottom:6px">勾选人员：</div>';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px 16px';
+    npUsersCache.forEach(u => {
+      const lab = document.createElement('label');
+      lab.style.cssText = 'font-size:13.5px;display:flex;gap:5px;align-items:center;font-weight:400';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = u.id;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode((u.name || '') + '（' + u.email + '）'));
+      wrap.appendChild(lab);
+    });
+    if (!npUsersCache.length) box.innerHTML = '<div style="color:#8A94A6;font-size:13px">用户列表读不到</div>';
+    else box.appendChild(wrap);
+  }
+  function npCollect(boxId){
+    const box = document.getElementById(boxId);
+    if (!box || box.style.display === 'none') return '';
+    return Array.from(box.querySelectorAll('input:checked')).map(cb => cb.value).join(',');
+  }
+  function npSyncUsers(){
+    const e = document.getElementById('np_edit').value, r = document.getElementById('np_read').value;
+    const eb = document.getElementById('npEditUsers'), rb = document.getElementById('npReadUsers');
+    eb.style.display = e === 'users' ? 'block' : 'none';
+    rb.style.display = r === 'users' ? 'block' : 'none';
+    if (e === 'users' && !eb.dataset.done){ npFillUsers(eb); eb.dataset.done = '1'; }
+    if (r === 'users' && !rb.dataset.done){ npFillUsers(rb); rb.dataset.done = '1'; }
+  }
+  document.getElementById('np_edit').addEventListener('change', npSyncUsers);
+  document.getElementById('np_read').addEventListener('change', npSyncUsers);
+  async function deleteLedger(l){
+    if (!confirm('删除记账本「' + (l.title || '') + '」？里面的账目会一起删除。')) return;
+    try {
+      const r = await pbApi(JR + '?perPage=500&filter=' + encodeURIComponent("(project='" + l.id + "')"));
+      for (const rec of (r.items || [])) {
+        try { await pbApi(JR + '/' + rec.id, {method: 'DELETE'}); } catch(e){}
+      }
+      await pbApi(AD + '/' + l.id, {method: 'DELETE'});
+      logAct('删除记账本', l.title || '');
+      await loadPicker();
+    } catch(e){ alert('删除失败'); }
+  }
+
+  /* ===== 进入一个记账本 ===== */
+  async function loadProject(){
+    let p = null;
+    try { p = await pbApi(AD + '/' + PID + '?expand=owner'); } catch(e){}
+    if (!p || p.app !== 'ledger') {
+      document.getElementById('pkErr').textContent = '这个记账本不存在，或你没有查看权限。';
+      await loadPicker();
+      return;
+    }
+    PROJ = p;
+    const me = pbUser() || {};
+    const og = (p.expand && p.expand.owner && p.expand.owner.group) || '';
+    canEdit = me.level === '一级' || p.owner === me.id || p.edit_scope === 'all' ||
+      (p.edit_scope === 'group' && !!me.group && og === me.group) ||
+      (p.edit_scope === 'users' && (',' + (p.edit_user_ids || '') + ',').indexOf(',' + me.id + ',') >= 0);
+    document.getElementById('barTitle').textContent = '📒 ' + (p.title || '记账本');
+    document.title = (p.title || '记账本') + ' · 记账本';
+    document.getElementById('switchLink').style.display = '';
+    var oldPill = document.getElementById('jzPill');
+    if (oldPill) oldPill.remove();
+    var pill = document.createElement('div');
+    pill.id = 'jzPill';
+    pill.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:9999;background:#fff;border:1px solid #D8E1EC;color:#0A2540;padding:10px 12px;border-radius:12px;font-size:13px;box-shadow:0 8px 24px rgba(16,42,80,.12);display:flex;flex-direction:column;gap:5px;min-width:136px';
+    var lk = 'display:block;color:#2563EB;text-decoration:none;padding:2px 0';
+    pill.innerHTML = '<div id="jzPillT" style="font-weight:700;color:#0A2540;padding-bottom:5px;border-bottom:1px solid #EDF1F6"></div>' +
+      '<a href="javascript:void(0)" id="jzExp" style="' + lk + '">⬇ 导出 CSV</a>' +
+      '<a href="/history.html?src=jizhang&project=' + PID + '" style="' + lk + '">🕘 本账本历史</a>' +
+      '<a href="/jizhang.html" style="' + lk + '">↔ 切换记账本</a>' +
+      '<a href="/" style="' + lk + '">返回门户</a>';
+    pill.querySelector('#jzPillT').textContent = '项目：' + (p.title || '记账本') + (canEdit ? '' : '（只读）');
+    document.body.appendChild(pill);
+    pill.querySelector('#jzExp').addEventListener('click', function(){ var b = document.getElementById('expBtn'); if (b) b.click(); });
+    document.getElementById('picker').style.display = 'none';
+    document.getElementById('book').style.display = 'block';
+    document.getElementById('f_d').value = new Date().toISOString().slice(0, 10);
+    setKind('支出');
+    if (!canEdit) {
+      document.getElementById('addPanel').style.display = 'none';
+      document.getElementById('roNote').style.display = 'block';
+    }
+    await load();
+  }
+  async function load(){
+    try {
+      const base = "(project='" + PID + "'";
+      const live = await pbApi(JR + '?perPage=300&sort=-d,-created&filter=' + encodeURIComponent(base + ' && trashed != true)'));
+      records = live.items || [];
+      const dead = await pbApi(JR + '?perPage=300&sort=-d,-created&filter=' + encodeURIComponent(base + ' && trashed = true)'));
+      trashRecords = dead.items || [];
+      render();
+      renderTrash();
+    } catch(e){
+      document.getElementById('tbody').innerHTML = '<tr><td colspan="6" style="color:#C0392B">加载失败，刷新再试</td></tr>';
+    }
+  }
+  function rowCells(tr, r){
+    tr.innerHTML = '<td style="white-space:nowrap"></td><td><span class="tag"></span></td><td></td><td style="color:#8A94A6"></td><td style="text-align:right"></td><td style="white-space:nowrap"></td>';
+    tr.children[0].textContent = r.d;
+    tr.children[1].querySelector('.tag').textContent = r.cat;
+    tr.children[2].textContent = r.note || '';
+    tr.children[3].textContent = r.who || '';
+    const amt = tr.children[4];
+    amt.textContent = (r.kind === '收入' ? '+' : '-') + fmt(r.amt);
+    amt.className = r.kind === '收入' ? 'amt-in' : 'amt-out';
+    amt.style.textAlign = 'right';
+  }
+  function render(){
+    const mp = monthPrefix();
+    let tin = 0, tout = 0;
+    const catSum = {};
+    records.forEach(r => {
+      if ((r.d || '').startsWith(mp)) {
+        if (r.kind === '收入') tin += r.amt; else { tout += r.amt; catSum[r.cat] = (catSum[r.cat] || 0) + r.amt; }
+      }
+    });
+    document.getElementById('stIn').textContent = fmt(tin);
+    document.getElementById('stOut').textContent = fmt(tout);
+    document.getElementById('stBal').textContent = fmt(tin - tout);
+    const cats = Object.entries(catSum).sort((a, b) => b[1] - a[1]);
+    const catBox = document.getElementById('catBox');
+    catBox.textContent = '';
+    if (cats.length) {
+      cats.forEach(([c, v], i) => {
+        if (i) catBox.appendChild(document.createTextNode(' · '));
+        const b = document.createElement('b'); b.textContent = c;
+        catBox.appendChild(b);
+        catBox.appendChild(document.createTextNode(' ' + fmt(v)));
+      });
+    } else catBox.textContent = '本月还没有支出记录';
+    const tb = document.getElementById('tbody');
+    tb.innerHTML = '';
+    records.slice(0, 60).forEach(r => {
+      const tr = document.createElement('tr');
+      rowCells(tr, r);
+      if (canEdit) {
+        const del = document.createElement('button');
+        del.className = 'del'; del.textContent = '删除';
+        del.addEventListener('click', () => trashRecord(r));
+        tr.children[5].appendChild(del);
+      }
+      tb.appendChild(tr);
+    });
+    if (!records.length) tb.innerHTML = '<tr><td colspan="6" style="color:#8A94A6">还没有记录，记第一笔吧。</td></tr>';
+  }
+  function renderTrash(){
+    const tb = document.getElementById('ttbody');
+    tb.innerHTML = '';
+    trashRecords.forEach(r => {
+      const tr = document.createElement('tr');
+      rowCells(tr, r);
+      if (canEdit) {
+        const rst = document.createElement('button');
+        rst.className = 'rst'; rst.textContent = '恢复';
+        rst.addEventListener('click', () => restoreRecord(r));
+        const del = document.createElement('button');
+        del.className = 'del'; del.textContent = '彻底删除';
+        del.addEventListener('click', () => purgeRecord(r));
+        tr.children[5].appendChild(rst);
+        tr.children[5].appendChild(del);
+      }
+      tb.appendChild(tr);
+    });
+    if (!trashRecords.length) tb.innerHTML = '<tr><td colspan="6" style="color:#8A94A6">空的</td></tr>';
+  }
+  async function addRecord(){
+    const err = document.getElementById('err');
+    err.textContent = '';
+    const d = document.getElementById('f_d').value;
+    const amt = parseFloat(document.getElementById('f_amt').value);
+    if (!d){ err.textContent = '选一下日期'; return; }
+    if (!amt || amt <= 0){ err.textContent = '金额要大于 0'; return; }
+    const u = pbUser();
+    const note = document.getElementById('f_note').value.trim();
+    try {
+      await pbApi(JR, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          d, kind, cat: document.getElementById('f_cat').value,
+          amt, note, who: (u && (u.name || u.email)) || '', owner: u ? u.id : '', project: PID
+        })
+      });
+      logAct('记账', d + ' ' + kind + ' ' + amt + ' 元 ' + note);
+      document.getElementById('f_amt').value = '';
+      document.getElementById('f_note').value = '';
+      await load();
+    } catch(e){ err.textContent = '没记上，再试一次'; }
+  }
+  async function trashRecord(r){
+    if (!confirm('把这条记录移入回收站？' + r.d + ' ' + r.cat + ' ' + r.amt + ' 元')) return;
+    try {
+      await pbApi(JR + '/' + r.id, {
+        method: 'PATCH', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({trashed: true})
+      });
+      logAct('记账移入回收站', r.d + ' ' + r.cat + ' ' + r.amt + ' 元');
+      await load();
+    } catch(e){ alert('操作失败'); }
+  }
+  async function restoreRecord(r){
+    try {
+      await pbApi(JR + '/' + r.id, {
+        method: 'PATCH', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({trashed: false})
+      });
+      logAct('记账恢复', r.d + ' ' + r.cat + ' ' + r.amt + ' 元');
+      await load();
+    } catch(e){ alert('恢复失败'); }
+  }
+  async function purgeRecord(r){
+    if (!confirm('彻底删除这条记录？删了就没了。')) return;
+    try {
+      await pbApi(JR + '/' + r.id, {method: 'DELETE'});
+      logAct('记账彻底删除', r.d + ' ' + r.cat + ' ' + r.amt + ' 元');
+      await load();
+    } catch(e){ alert('删除失败'); }
+  }
+  function expCsv(){
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const lines = [['日期','类型','分类','金额','备注','记账人'].join(',')];
+    records.forEach(r => lines.push([r.d, r.kind, r.cat, r.amt, r.note || '', r.who || ''].map(q).join(',')));
+    const blob = new Blob(['\ufeff' + lines.join('\n')], {type: 'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (PROJ && PROJ.title ? PROJ.title : '记账本') + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+</script>
+</body>
+</html>

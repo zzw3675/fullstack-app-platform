@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全栈网页应用管理平台</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937}
+  header{background:#0A2540;border-bottom:3px solid #22C3D6;color:#fff;padding:18px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header .t{font-size:20px;font-weight:700}
+  header .s{font-size:12px;opacity:.75;margin-top:2px}
+  header .sp{flex:1}
+  header .who{font-size:13px;opacity:.9}
+  header button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.35);height:34px;padding:0 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  header button:hover{background:rgba(255,255,255,.25)}
+  main{max-width:960px;margin:0 auto;padding:22px 16px 40px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  a.card{display:block;background:#fff;border-radius:10px;padding:20px 18px;text-decoration:none;color:#1F2937;border:1px solid #E1E9F2;transition:border-color .12s, background .12s}
+  a.card:hover{border-color:#2563EB;background:#F8FBFF}
+  .ic{font-size:30px;line-height:1}
+  .ct{font-size:16px;font-weight:600;margin:10px 0 4px}
+  .cd{font-size:13px;color:#8A94A6;line-height:1.5}
+  .empty{background:#fff;border:1px dashed #C3D2E2;border-radius:10px;padding:26px;text-align:center;color:#8A94A6;font-size:14px}
+  .newbar{display:flex;align-items:center;margin-bottom:14px}
+  .newbar .sp{flex:1}
+  .btnNew{height:40px;padding:0 18px;border:none;border-radius:8px;background:#2563EB;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  .btnNew:hover{background:#1D4FD7}
+  #tplWizard label{display:block;font-size:13px;color:#5B6573;margin:0 0 6px}
+  #tplWizard input[type="text"],#tplWizard select{width:100%;height:40px;border:1px solid #D8E1EC;border-radius:8px;padding:0 10px;font-size:14px;background:#fff}
+  #tplWizard .checks{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px}
+  #tplWizard .checks label{display:flex;gap:6px;align-items:center;margin:0;color:#1F2937}
+  #tplWizard .wbtn{height:40px;padding:0 18px;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  #tplWizard .wbtn.ghost{background:#fff;color:#0A2540;border:1px solid #C3D2E2;font-weight:500}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<header>
+  <div>
+    <div class="t" id="siteTitle">全栈网页应用管理平台</div>
+    <div class="s" id="siteSub" style="display:none"></div>
+  </div>
+  <div class="sp"></div>
+  <div class="who" id="who"></div>
+  <button onclick="location.href='/password.html'">修改密码</button>
+  <button onclick="location.href='/admin.html'">管理中心</button>
+  <button onclick="pbLogout()">退出登录</button>
+</header>
+<main>
+  <div class="newbar" id="newbar" style="display:none">
+    <div style="font-size:14px;color:#5B6573">想加个页面？从模板挑一个，填好名字就能用。</div>
+    <div class="sp"></div>
+    <button class="btnNew" onclick="openTplWizard()">＋ 从模板新建门户</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">暂时还没有你能打开的页面，跟管理员说一声吧。</div>
+  <!-- 从模板新建门户（向导弹窗） -->
+  <div id="tplWizard" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:2000;overflow:auto;padding:24px 14px">
+    <div style="max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:22px">
+      <div style="display:flex;align-items:center"><h2 style="margin:0;font-size:17px;color:#0A2540">从模板新建门户</h2><span style="flex:1"></span><button class="wbtn ghost" style="height:34px" onclick="closeTplWizard()">✕ 关闭</button></div>
+      <div style="font-size:13px;color:#8A94A6;margin-top:8px">先选模板（只列你有权限用的），再定名称、负责人和谁能看，确认后立即生成到首页。</div>
+      <div id="wzTpls" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px"></div>
+      <div id="wzForm" style="display:none;margin-top:18px;border-top:1px solid #E1E9F2;padding-top:16px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div><label>门户名称 *</label><input type="text" id="w_name" placeholder="如：值班表"></div>
+          <div><label>标识（英文小写，门户地址用）*</label><input type="text" id="w_slug" placeholder="如：zhiban"></div>
+          <div><label>图标（一个 emoji）</label><input type="text" id="w_icon" maxlength="4"></div>
+          <div><label>负责人</label><select id="w_owner"></select></div>
+        </div>
+        <div style="margin-top:14px">
+          <label>谁能看到这个门户</label>
+          <div class="checks">
+            <label><input type="radio" name="w_perm" value="all" checked onchange="wzPermToggle()"> 所有人</label>
+            <label><input type="radio" name="w_perm" value="group" onchange="wzPermToggle()"> 只给某个组</label>
+            <label><input type="radio" name="w_perm" value="users" onchange="wzPermToggle()"> 只给指定的人</label>
+            <label><input type="radio" name="w_perm" value="owner" onchange="wzPermToggle()"> 仅负责人</label>
+          </div>
+        </div>
+        <div id="wz_row_group" style="display:none;margin-top:12px"><label>指定哪个组</label><select id="w_group"></select></div>
+        <div id="wz_row_users" style="display:none;margin-top:12px"><label>指定能看的人</label><div class="checks" id="wzUserChecks"></div></div>
+        <div id="wzErr" style="color:#C0392B;font-size:13px;min-height:18px;margin-top:10px"></div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="wbtn" onclick="createFromTpl()">生成门户</button>
+          <button class="wbtn ghost" onclick="closeTplWizard()">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="/assets/auth.js"></script>
+<script>
+  if (pbRequireAuth()) init();
+  function canSee(p, u){
+    if (p.active === false) return false;
+    if (p.trashed === true) return false;
+    if (p.visibility === 'users') {
+      const ids = (p.visible_user_ids || '').split(',').map(s => s.trim()).filter(Boolean);
+      return ids.includes(u.id);
+    }
+    if (p.visibility === 'group') {
+      return !!p.group && !!u.group && p.group === u.group;
+    }
+    return true;
+  }
+  async function init(){
+    const u = pbUser();
+    document.getElementById('who').textContent = (u && (u.name || u.email)) || '';
+    if (u && u.approved !== true) {
+      document.getElementById('grid').innerHTML = '<div style="grid-column:1/-1;background:#fff;border:1px solid #E1E9F2;border-radius:10px;padding:30px 24px;text-align:center"><div style="font-size:36px">⏳</div><h3 style="margin:10px 0 6px;color:#0A2540">账号待审核</h3><p style="color:#8A94A6;font-size:14px;line-height:1.8;margin:0">你的账号已经注册好了，要等管理员审核通过后才能使用。<br>通过后再刷新这个页面就能进来了。</p></div>';
+      return;
+    }
+    try {
+      const st = await pbApi('/api/collections/settings/records?perPage=50');
+      (st.items || []).forEach(r => {
+        if (r.key === 'site_title' && r.value){ document.getElementById('siteTitle').textContent = r.value; document.title = r.value; }
+        if (r.key === 'site_subtitle' && r.value){ const sb = document.getElementById('siteSub'); sb.textContent = r.value; sb.style.display = 'block'; }
+      });
+    } catch(e){}
+    const cards = [];
+    try {
+      const pg = await pbApi('/api/collections/pages/records?perPage=200&sort=sort');
+      (pg.items || []).forEach(p => {
+        if (!canSee(p, u)) return;
+        cards.push({
+          icon: p.icon || '📄',
+          title: p.title,
+          desc: p.kind === 'link' ? '点开使用' : (p.visibility === 'group' ? '组内页面' : '点开使用'),
+          href: p.kind === 'link' ? (p.url || '#') : ('/view.html?slug=' + encodeURIComponent(p.slug))
+        });
+      });
+    } catch(e){}
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    cards.forEach(c => {
+      const a = document.createElement('a');
+      a.className = 'card'; a.href = c.href;
+      a.innerHTML = '<div class="ic"></div><div class="ct"></div><div class="cd"></div>';
+      a.children[0].textContent = c.icon;
+      a.children[1].textContent = c.title;
+      a.children[2].textContent = c.desc;
+      grid.appendChild(a);
+    });
+    if (!cards.length) document.getElementById('empty').style.display = 'block';
+    document.getElementById('newbar').style.display = 'flex';
+  }
+  /* ===== 从模板新建门户（向导） ===== */
+  let wzTpl = null;
+  let wzUsers = [];
+  let wzGroups = [];
+  function wzEsc(t){
+    return String(t == null ? '' : t).replace(/[&<>\"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;'}[c]));
+  }
+  async function openTplWizard(){
+    const u = pbUser();
+    document.getElementById('tplWizard').style.display = 'block';
+    document.getElementById('wzForm').style.display = 'none';
+    document.getElementById('wzErr').textContent = '';
+    const box = document.getElementById('wzTpls');
+    box.innerHTML = '<div style="color:#8A94A6">加载模板…</div>';
+    try {
+      const [tr, ur, gr] = await Promise.all([
+        pbApi('/api/collections/templates/records?perPage=100&sort=sort,created'),
+        pbApi('/api/collections/users/records?perPage=200').catch(() => ({items: []})),
+        pbApi('/api/collections/groups/records?perPage=100').catch(() => ({items: []}))
+      ]);
+      wzUsers = ur.items || [];
+      if (!wzUsers.some(x => x.id === u.id)) wzUsers.push(u);
+      wzGroups = gr.items || [];
+      const tpls = tr.items || [];
+      box.innerHTML = '';
+      if (!tpls.length) box.innerHTML = '<div style="color:#8A94A6">没有你能用的模板，跟管理员说一声吧。</div>';
+      tpls.forEach(t => {
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1.5px solid #E1E9F2;border-radius:10px;padding:12px;cursor:pointer;background:#fff';
+        card.innerHTML = '<div style="font-size:20px">' + wzEsc(t.icon || '🧩') + '</div>' +
+          '<div style="font-weight:600;color:#0A2540;margin:4px 0">' + wzEsc(t.name || '') + '</div>' +
+          '<div style="font-size:12px;color:#5B6B7F">' + wzEsc(t.desc || '') + '</div>' +
+          '<div style="font-size:11px;color:#8A94A6;margin-top:4px">' + (t.kind === 'app' ? '应用模板' : '内容模板') + '</div>';
+        card.addEventListener('click', () => pickTpl(t, card));
+        box.appendChild(card);
+      });
+    } catch(e){
+      box.innerHTML = '<div style="color:#C0392B">模板加载失败，关掉重试</div>';
+    }
+  }
+  function closeTplWizard(){ document.getElementById('tplWizard').style.display = 'none'; }
+  function pickTpl(t, card){
+    wzTpl = t;
+    Array.from(document.getElementById('wzTpls').children).forEach(c => { c.style.borderColor = '#E1E9F2'; });
+    card.style.borderColor = '#2563EB';
+    const u = pbUser();
+    document.getElementById('w_name').value = t.name || '';
+    document.getElementById('w_slug').value = t.slug_hint || ('p' + Date.now().toString(36));
+    document.getElementById('w_icon').value = t.icon || '';
+    const iAmL2 = u.level === '二级';
+    const osel = document.getElementById('w_owner');
+    osel.innerHTML = '';
+    wzUsers.forEach(x => {
+      const o = document.createElement('option');
+      o.value = x.id;
+      o.textContent = (x.name || '') + '（' + x.email + '）';
+      osel.appendChild(o);
+    });
+    osel.value = u.id;
+    osel.disabled = iAmL2 || u.level !== '一级';
+    const gsel = document.getElementById('w_group');
+    gsel.innerHTML = '';
+    wzGroups.forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.id; o.textContent = g.name;
+      gsel.appendChild(o);
+    });
+    if (!wzGroups.length && u.group) {
+      const o = document.createElement('option');
+      o.value = u.group; o.textContent = '本组';
+      gsel.appendChild(o);
+    }
+    document.querySelectorAll('input[name="w_perm"]').forEach(r => {
+      r.disabled = iAmL2;
+      if (iAmL2) r.checked = (r.value === 'group');
+      else if (r.value === 'all') r.checked = true;
+    });
+    gsel.disabled = iAmL2;
+    if (iAmL2 && u.group) gsel.value = u.group;
+    else if (u.group) gsel.value = u.group;
+    renderUserChecks([]);
+    wzPermToggle();
+    document.getElementById('wzErr').textContent = '';
+    document.getElementById('wzForm').style.display = 'block';
+  }
+  function wzPermToggle(){
+    const cur = document.querySelector('input[name="w_perm"]:checked');
+    const v = cur ? cur.value : 'all';
+    document.getElementById('wz_row_group').style.display = v === 'group' ? 'block' : 'none';
+    document.getElementById('wz_row_users').style.display = v === 'users' ? 'block' : 'none';
+  }
+  function renderUserChecks(selectedIds){
+    const box = document.getElementById('wzUserChecks');
+    if (!box) return;
+    box.innerHTML = '';
+    wzUsers.forEach(x => {
+      const lab = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = x.id;
+      if (selectedIds && selectedIds.includes(x.id)) cb.checked = true;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode((x.name || '') + '（' + x.email + '）'));
+      box.appendChild(lab);
+    });
+    if (!wzUsers.length) box.textContent = '暂无用户';
+  }
+  async function createFromTpl(){
+    const err = document.getElementById('wzErr');
+    err.textContent = '';
+    if (!wzTpl){ err.textContent = '先选一个模板'; return; }
+    const name = document.getElementById('w_name').value.trim();
+    const slug = document.getElementById('w_slug').value.trim();
+    if (!name || !slug){ err.textContent = '名称和标识必填'; return; }
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)){ err.textContent = '标识只能用小写英文、数字和短横线'; return; }
+    const u = pbUser();
+    const ownerId = document.getElementById('w_owner').value || u.id;
+    const permEl = document.querySelector('input[name="w_perm"]:checked');
+    const perm = permEl ? permEl.value : 'all';
+    let visibility = 'all', visible = '', group = '';
+    if (perm === 'group'){
+      visibility = 'group';
+      group = document.getElementById('w_group').value;
+      if (!group){ err.textContent = '选一个组'; return; }
+    } else if (perm === 'users'){
+      visibility = 'users';
+      visible = Array.from(document.querySelectorAll('#wzUserChecks input:checked')).map(cb => cb.value).join(',');
+      if (!visible){ err.textContent = '至少选一个能看的人'; return; }
+    } else if (perm === 'owner'){
+      visibility = 'users';
+      visible = ownerId;
+    }
+    const body = {
+      title: name, slug,
+      icon: document.getElementById('w_icon').value.trim(),
+      sort: 50, active: true, trashed: false, app_mode: false,
+      visibility, visible_user_ids: visible, group, owner: ownerId,
+      template: wzTpl.id
+    };
+    if (wzTpl.kind === 'app'){
+      body.kind = 'link';
+      body.url = wzTpl.url || '';
+      body.html = '';
+    } else {
+      body.kind = 'html';
+      body.url = '';
+      let html = wzTpl.html || '';
+      if (html.indexOf('__APP_SLUG__') >= 0) html = html.split('__APP_SLUG__').join(slug);
+      body.html = html;
+    }
+    try {
+      await pbApi('/api/collections/pages/records', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+      });
+      try {
+        await pbApi('/api/collections/audit_logs/records', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({actor: (u.name || u.email) || '', action: '从模板新建门户', target: name, detail: '模板 ' + (wzTpl.name || '')})
+        });
+      } catch(e){}
+      closeTplWizard();
+      init();
+    } catch(e){ err.textContent = '生成失败：' + e.message + '（标识可能跟已有门户重复）'; }
+  }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>页面</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#fff;color:#1F2937}
+  .bar{height:48px;background:#0A2540;border-bottom:3px solid #22C3D6;color:#fff;display:flex;align-items:center;gap:14px;padding:0 16px}
+  .bar a{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:8px}
+  .bar .pt{font-size:15px;font-weight:600}
+  iframe{display:block;width:100%;height:calc(100vh - 48px);border:0}
+  .msg{max-width:520px;margin:80px auto;text-align:center;color:#8A94A6;font-size:15px;line-height:1.8;padding:0 20px}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="bar">
+  <a href="/">← 返回门户</a>
+  <div class="pt" id="pt">加载中…</div>
+</div>
+<div class="msg" id="msg" style="display:none"></div>
+<iframe id="fr" style="display:none"></iframe>
+<script src="/assets/auth.js"></script>
+<script>
+  if (pbRequireAuth()) init();
+  function showMsg(t){
+    document.getElementById('pt').textContent = '提示';
+    const m = document.getElementById('msg');
+    m.textContent = t; m.style.display = 'block';
+  }
+  async function init(){
+    const slug = new URLSearchParams(location.search).get('slug') || '';
+    if (!slug){ showMsg('没有指定页面。'); return; }
+    try {
+      const r = await pbApi('/api/collections/pages/records?perPage=1&filter=' +
+        encodeURIComponent("(slug='" + slug.replace(/'/g, "\\'") + "')"));
+      const p = (r.items || [])[0];
+      if (!p || p.active === false || p.trashed === true){ showMsg('这个页面不存在，或者还没发布。'); return; }
+      const u = pbUser();
+      if (p.visibility === 'users') {
+        const ids = (p.visible_user_ids || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (!u || !ids.includes(u.id)){ showMsg('你没有打开这个页面的权限，跟管理员说一声吧。'); return; }
+      }
+      if (p.visibility === 'group') {
+        if (!u || !p.group || u.group !== p.group){ showMsg('这个页面只对指定组开放，跟管理员说一声吧。'); return; }
+      }
+      if (p.kind === 'link'){ location.href = p.url || '/'; return; }
+      document.title = p.title;
+      document.getElementById('pt').textContent = (p.icon ? p.icon + ' ' : '') + p.title;
+      const fr = document.getElementById('fr');
+      if (p.app_mode !== true) {
+        // 普通页面进沙箱：脚本可运行，但碰不到平台登录态与接口凭据
+        fr.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals');
+      }
+      fr.srcdoc = p.html || '<p style="font-family:sans-serif;color:#888;padding:24px">这个页面还没有内容。</p>';
+      fr.style.display = 'block';
+    } catch(e){ showMsg('加载失败，刷新一下再试。'); }
+  }
+</script>
+</body>
+</html>

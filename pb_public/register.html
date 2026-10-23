@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自助注册 · 全栈网页应用管理平台</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+  .card{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:28px 24px;width:100%;max-width:380px}
+  h1{font-size:20px;color:#0A2540;margin:0 0 6px;text-align:center}
+  .sub{font-size:13px;color:#8A94A6;margin-bottom:8px;text-align:center;line-height:1.7}
+  label{display:block;font-size:13px;color:#5B6573;margin:14px 0 6px}
+  input{width:100%;height:42px;border:1px solid #D8E1EC;border-radius:8px;padding:0 12px;font-size:15px;box-sizing:border-box}
+  input:focus{border-color:#2563EB;outline:none}
+  button{width:100%;height:44px;margin-top:22px;border:none;border-radius:8px;background:#0A2540;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  button:hover{background:#14365E}
+  #msg{font-size:13px;color:#C0392B;min-height:18px;margin-top:12px;text-align:center}
+  .ok{display:none;text-align:center;padding:10px 0 4px}
+  .ok .e{font-size:42px}
+  .ok h2{font-size:17px;color:#0A2540;margin:10px 0 6px}
+  .ok p{font-size:13px;color:#8A94A6;line-height:1.8;margin:0}
+  .ok a{display:inline-block;margin-top:16px;background:#0A2540;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="card">
+  <div id="formBox">
+    <h1>自助注册</h1>
+    <div class="sub">注册后要等管理员审核通过才能登录使用，<br>请填真实姓名，方便管理员认人。</div>
+    <label>姓名</label>
+    <input id="name" type="text" autocomplete="name" placeholder="你的名字">
+    <label>邮箱（登录用）</label>
+    <input id="email" type="email" autocomplete="email" placeholder="name@example.com">
+    <label>密码（至少 8 位）</label>
+    <input id="pw" type="password" autocomplete="new-password" placeholder="设置一个密码">
+    <label>再输一遍密码</label>
+    <input id="pw2" type="password" autocomplete="new-password" placeholder="确认密码">
+    <button id="btn">注册</button>
+    <div id="msg"></div>
+    <div style="text-align:center;margin-top:6px"><a href="/login.html" style="font-size:13px;color:#2563EB;text-decoration:none">已有账号？去登录</a></div>
+  </div>
+  <div class="ok" id="okBox">
+    <div class="e">🎉</div>
+    <h2>注册好了</h2>
+    <p>账号已提交，等管理员审核通过后就能登录。<br>通过后用你刚填的邮箱和密码登录即可。</p>
+    <a href="/login.html">去登录</a>
+  </div>
+</div>
+<script>
+  document.getElementById('btn').addEventListener('click', register);
+  document.getElementById('pw2').addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+  async function register(){
+    const msg = document.getElementById('msg');
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pw = document.getElementById('pw').value;
+    const pw2 = document.getElementById('pw2').value;
+    msg.textContent = '';
+    if (!name || !email || !pw){ msg.textContent = '姓名、邮箱、密码都要填'; return; }
+    if (pw.length < 8){ msg.textContent = '密码至少 8 位'; return; }
+    if (pw !== pw2){ msg.textContent = '两次密码不一致'; return; }
+    try {
+      const r = await fetch('/api/collections/users/records', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, email, password: pw, passwordConfirm: pw2, emailVisibility: true})
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const d = (j && j.data) || {};
+        if (d.email) msg.textContent = '注册失败：这个邮箱已经注册过了';
+        else msg.textContent = '注册失败：' + (j.message || '请检查填写内容');
+        return;
+      }
+      document.getElementById('formBox').style.display = 'none';
+      document.getElementById('okBox').style.display = 'block';
+    } catch(e){ msg.textContent = '注册失败，网络不太顺，再试一次'; }
+  }
+</script>
+</body>
+</html>

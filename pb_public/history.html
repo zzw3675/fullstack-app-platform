@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>历史版本 · 全栈网页应用管理平台</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#F3F6FA;color:#1F2937}
+  .bar{background:#0A2540;border-bottom:3px solid #22C3D6;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bar a{color:#fff;text-decoration:none;font-size:13px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:8px}
+  .bar .t{font-size:18px;font-weight:700}
+  .bar .sp{flex:1}
+  .bar .who{font-size:13px;opacity:.9}
+  main{max-width:900px;margin:0 auto;padding:20px 16px 44px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs a{padding:8px 16px;border-radius:8px;border:1px solid #C3D2E2;background:#fff;color:#5B6573;text-decoration:none;font-size:14px}
+  .tabs a.on{background:#0A2540;border-color:#0A2540;color:#fff;font-weight:600}
+  .panel{background:#fff;border-radius:10px;border:1px solid #E1E9F2;padding:18px;margin-bottom:16px}
+  select{height:40px;border:1px solid #D8E1EC;border-radius:8px;padding:0 10px;font-size:14px;background:#fff;max-width:100%}
+  .row{display:flex;gap:12px;padding:13px 4px;border-bottom:1px solid #EDF1F6;align-items:flex-start}
+  .row:last-child{border-bottom:0}
+  .badge{flex:none;font-size:12px;font-weight:600;border-radius:6px;padding:3px 9px;margin-top:1px}
+  .b-update{background:#EAF1FE;color:#2563EB}
+  .b-delete{background:#FDECEA;color:#C0392B}
+  .b-restore{background:#E6F6EC;color:#1E9E62}
+  .meta{flex:1;min-width:0}
+  .meta .tt{font-size:14.5px;font-weight:600}
+  .meta .sub{font-size:12.5px;color:#8A94A6;margin-top:2px;line-height:1.6}
+  .meta .snap{font-size:13px;color:#5B6573;margin-top:4px;line-height:1.65;white-space:pre-line}
+  .btn{flex:none;height:34px;padding:0 14px;border:1px solid #C3D2E2;border-radius:8px;background:#fff;color:#0A2540;font-size:13px;cursor:pointer}
+  .btn:hover{border-color:#2563EB;color:#2563EB}
+  .empty{color:#8A94A6;text-align:center;padding:26px;font-size:14px}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0A2540;color:#fff;font-size:14px;padding:10px 18px;border-radius:10px;display:none;z-index:50}
+  .foot{font-size:12.5px;color:#8A94A6;line-height:1.8}
+</style>
+<link rel="stylesheet" href="/assets/theme.css">
+<script src="/assets/theme.js"></script>
+</head>
+<body>
+<div class="bar">
+  <a href="/">← 返回门户</a>
+  <a href="/checklist.html" id="backProj">📋 检查表项目</a>
+  <div class="t">🕘 历史版本</div>
+  <div class="sp"></div>
+  <div class="who" id="who"></div>
+</div>
+<main>
+  <div class="tabs">
+    <a href="/history.html" id="tabProj">项目历史</a>
+    <a href="/history.html?src=jizhang" id="tabJz">记账历史</a>
+  </div>
+  <div class="panel" id="projBar">
+    <label style="font-size:13px;color:#5B6573;display:block;margin-bottom:6px">选择项目（只列你能看的项目）</label>
+    <select id="projSel" style="width:100%"></select>
+  </div>
+  <div class="panel">
+    <div id="list"><div class="empty">加载中…</div></div>
+  </div>
+  <p class="foot">这里保存的是每次修改 / 删除前自动留下的旧版本快照（谁改的、什么时候、改之前是什么样）。点「恢复」会把那条数据恢复到这个快照的样子；恢复前系统会先把当前版本也存一份，所以恢复错了还能再退回来。列表只显示最近 100 条；每条数据最多保留最近 50 个版本、且不超过 180 天。</p>
+</main>
+<div id="toast"></div>
+<script src="/assets/auth.js"></script>
+<script>
+(function(){
+  if (!pbRequireAuth()) return;
+  var me = pbUser();
+  document.getElementById('who').textContent = me ? (me.name || me.email || '') : '';
+  var src = new URLSearchParams(location.search).get('src') || 'project';
+  var isJz = src === 'jizhang';
+  document.getElementById('tabProj').className = isJz ? '' : 'on';
+  document.getElementById('tabJz').className = isJz ? 'on' : '';
+  document.getElementById('projBar').style.display = isJz ? 'none' : '';
+  document.getElementById('backProj').style.display = isJz ? 'none' : '';
+  var HS = '/api/collections/history/records';
+  var AD = '/api/collections/app_data/records';
+  var JZ = '/api/collections/jizhang_records/records';
+  function toast(m){
+    var t = document.getElementById('toast');
+    t.textContent = m; t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 2800);
+  }
+  function esc(s){
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function fmtT(s){ return (s || '').slice(0, 19).replace('T', ' '); }
+  function actBadge(a){
+    if (a === 'delete') return '<span class="badge b-delete">删除前</span>';
+    if (a === 'restore') return '<span class="badge b-restore">恢复时</span>';
+    return '<span class="badge b-update">修改前</span>';
+  }
+  function snapSummary(row){
+    var snap = {};
+    try { snap = JSON.parse(row.snapshot || '{}'); } catch (e) {}
+    if (row.target_collection === 'jizhang_records') {
+      return esc(snap.d || '') + ' · ' + esc(snap.cat || '') + ' · ' +
+        (snap.kind === '收入' ? '+' : '-') + '¥' + esc(snap.amt == null ? '' : snap.amt) +
+        (snap.note ? ' · ' + esc(snap.note) : '') + (snap.trashed ? ' · （当时在回收站）' : '');
+    }
+    var c = null;
+    try { c = JSON.parse(snap.content || 'null'); } catch (e) {}
+    if (c && (c.title || c.section)) {
+      var parts = [];
+      if (c.section) parts.push(esc(c.section));
+      parts.push('状态：' + (c.result ? esc(c.result) : '未判定'));
+      if (c.owner) parts.push('负责人：' + esc(c.owner));
+      if (c.due_date) parts.push('截止：' + esc(c.due_date));
+      if (c.note) parts.push('备注：' + esc(c.note));
+      return parts.join(' · ');
+    }
+    return esc(row.target_title || snap.title || snap.name || '');
+  }
+  function renderRows(rows){
+    var box = document.getElementById('list');
+    if (!rows.length) { box.innerHTML = '<div class="empty">还没有历史记录。数据被修改或删除后，这里会自动留下旧版本。</div>'; return; }
+    box.innerHTML = '';
+    rows.forEach(function(row){
+      var ed = (row.expand && row.expand.editor && (row.expand.editor.name || row.expand.editor.email)) || '系统';
+      var div = document.createElement('div');
+      div.className = 'row';
+      div.innerHTML = actBadge(row.action) +
+        '<div class="meta"><div class="tt">' + esc(row.target_title || '（无标题）') + '</div>' +
+        '<div class="sub">' + esc(fmtT(row.created)) + ' · 操作人 ' + esc(ed) + '</div>' +
+        '<div class="snap">' + snapSummary(row) + '</div></div>';
+      var btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = '恢复到此版';
+      btn.addEventListener('click', function(){ restore(row); });
+      div.appendChild(btn);
+      box.appendChild(div);
+    });
+  }
+  function loadProjectHistory(pid){
+    document.getElementById('list').innerHTML = '<div class="empty">加载中…</div>';
+    pbApi(HS + '?perPage=100&sort=-created&expand=editor&filter=' + encodeURIComponent("(project='" + pid + "')"))
+      .then(function(j){ renderRows(j.items || []); })
+      .catch(function(){ document.getElementById('list').innerHTML = '<div class="empty">加载失败，刷新试试。</div>'; });
+  }
+  function loadJizhangHistory(){
+    document.getElementById('list').innerHTML = '<div class="empty">加载中…</div>';
+    var jp = new URLSearchParams(location.search).get('project');
+    var jfilt = jp ? "(target_collection='jizhang_records' && project='" + jp + "')" : "(target_collection='jizhang_records')";
+    pbApi(HS + '?perPage=100&sort=-created&expand=editor&filter=' + encodeURIComponent(jfilt))
+      .then(function(j){ renderRows(j.items || []); })
+      .catch(function(){ document.getElementById('list').innerHTML = '<div class="empty">加载失败，刷新试试。</div>'; });
+  }
+  function reload(){
+    if (isJz) loadJizhangHistory();
+    else {
+      var sel = document.getElementById('projSel');
+      if (sel.value) loadProjectHistory(sel.value);
+    }
+  }
+  function restore(row){
+    var snap = {};
+    try { snap = JSON.parse(row.snapshot || '{}'); } catch (e) {}
+    var name = row.target_title || '这条数据';
+    if (!confirm('把「' + name + '」恢复到 ' + fmtT(row.created) + ' 的版本？\n当前内容会先自动存一份历史，可以再退回来。')) return;
+    var isJzRow = row.target_collection === 'jizhang_records';
+    var base = isJzRow ? JZ : AD;
+    var body = {};
+    if (isJzRow) {
+      ['d', 'kind', 'cat', 'amt', 'note', 'who', 'trashed', 'project'].forEach(function(k){ if (snap[k] !== undefined) body[k] = snap[k]; });
+    } else {
+      ['app', 'title', 'content', 'who', 'edit_scope', 'read_scope', 'edit_user_ids', 'read_user_ids', 'project'].forEach(function(k){ if (snap[k] !== undefined) body[k] = snap[k]; });
+    }
+    fetch(base + '/' + row.target_id, { headers: { 'Authorization': pbToken() } })
+      .then(function(r){
+        if (r.status === 200) {
+          return pbApi(base + '/' + row.target_id, {
+            method: 'PATCH',
+            headers: { 'X-History-Action': 'restore', 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          }).then(function(){ toast('已恢复到该版本'); });
+        }
+        body.owner = me.id;
+        return pbApi(base, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        }).then(function(){ toast('原记录已删除，已按快照重新创建（负责人为你）'); });
+      })
+      .then(reload)
+      .catch(function(){ toast('恢复失败：可能没有编辑权限，或数据有冲突'); });
+  }
+  if (isJz) {
+    loadJizhangHistory();
+  } else {
+    pbApi(AD + '?perPage=100&sort=-updated&filter=' + encodeURIComponent("(app='checklist')"))
+      .then(function(j){
+        var sel = document.getElementById('projSel');
+        var items = j.items || [];
+        if (!items.length) {
+          sel.innerHTML = '<option value="">（没有你能看的项目）</option>';
+          document.getElementById('list').innerHTML = '<div class="empty">暂无项目。</div>';
+          return;
+        }
+        sel.innerHTML = items.map(function(p){
+          return '<option value="' + p.id + '">' + esc(p.title || '未命名项目') + '</option>';
+        }).join('');
+        var want = new URLSearchParams(location.search).get('project');
+        if (want && items.some(function(p){ return p.id === want; })) sel.value = want;
+        sel.addEventListener('change', function(){ loadProjectHistory(sel.value); });
+        loadProjectHistory(sel.value);
+      })
+      .catch(function(){
+        document.getElementById('list').innerHTML = '<div class="empty">项目加载失败，刷新试试。</div>';
+      });
+  }
+})();
+</script>
+</body>
+</html>

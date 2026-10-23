@@ -1,0 +1,8 @@
+pb_data/
+*.db
+.pb-superuser
+.env
+*.local
+# 演示数据包有意发布（虚构数据），覆盖上面的忽略规则
+!demo/pb_data/
+!demo/pb_data/*.db
